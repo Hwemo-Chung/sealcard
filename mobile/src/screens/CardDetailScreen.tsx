@@ -12,7 +12,7 @@ import {
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import { formatSealDate } from '../domain/dates';
-import { TEMPLATES } from '../domain/templates';
+import { resolveTemplate } from '../domain/templates';
 import type { Binder, Card } from '../domain/types';
 import { UNCATEGORIZED_LABEL } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
@@ -96,7 +96,7 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
 
       <Text style={styles.date}>{formatSealDate(card.sealedAt, card.dateFormatId)}</Text>
       <Text style={styles.meta}>
-        {binderName} · {TEMPLATES[card.templateId].label}
+        {binderName} · {resolveTemplate(card.templateId).label}
       </Text>
       <Text style={styles.frozen}>사진·날짜·템플릿은 변경할 수 없습니다.</Text>
 

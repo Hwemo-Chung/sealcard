@@ -1,6 +1,21 @@
 /** Sealcard domain — sealed cards are immutable after create. */
 
-export type TemplateId = 'polaroid' | 'frame_dark' | 'minimal';
+export type TemplateId =
+  | 'polaroid'
+  | 'polaroid_cream'
+  | 'polaroid_black'
+  | 'glass'
+  | 'glass_aurora'
+  | 'frame_dark'
+  | 'frame_gold'
+  | 'frame_wood'
+  | 'minimal'
+  | 'matte_gallery'
+  | 'film_strip'
+  | 'ticket'
+  | 'neon'
+  | 'postage'
+  | 'soft_round';
 
 export type DateFormatId = 'dot' | 'ko';
 

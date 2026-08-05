@@ -12,7 +12,7 @@ import { captureRef } from 'react-native-view-shot';
 import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { DateFormatId, TemplateId } from '../domain/types';
-import { TEMPLATES } from '../domain/templates';
+import { resolveTemplate } from '../domain/templates';
 import { colors, space } from '../theme';
 
 type Props = {
@@ -40,7 +40,8 @@ export function SealPreviewScreen({
   const [busy, setBusy] = useState(false);
   const screenW = Dimensions.get('window').width;
   const cardW = Math.min(screenW - space.lg * 2, 340);
-  const cardH = cardW / TEMPLATES[templateId].aspect;
+  const template = resolveTemplate(templateId);
+  const cardH = cardW / template.aspect;
 
   const confirm = () => {
     Alert.alert(
@@ -80,7 +81,9 @@ export function SealPreviewScreen({
   return (
     <View style={styles.root}>
       <Text style={styles.title}>미리보기</Text>
-      <Text style={styles.hint}>보이는 그대로 밀봉됩니다.</Text>
+      <Text style={styles.hint}>
+        {template.label} · 보이는 그대로 밀봉됩니다.
+      </Text>
       <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
         <CardFace
           ref={cardRef}

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { TEMPLATE_LIST } from '../domain/templates';
+import { TemplatePicker } from '../components/TemplatePicker';
 import type { DateFormatId, Settings, TemplateId } from '../domain/types';
+import { isTemplateId } from '../domain/templates';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -26,23 +27,24 @@ export function SettingsScreen({ onBack }: Props) {
     return <View style={styles.root} />;
   }
 
+  const templateId: TemplateId = isTemplateId(settings.defaultTemplateId)
+    ? settings.defaultTemplateId
+    : 'polaroid';
+
   return (
-    <View style={styles.root}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Pressable onPress={onBack} accessibilityRole="button">
         <Text style={styles.link}>← 뒤로</Text>
       </Pressable>
       <Text style={styles.title}>설정</Text>
 
-      <Text style={styles.section}>기본 템플릿</Text>
-      {TEMPLATE_LIST.map((t) => (
-        <Pressable
-          key={t.id}
-          onPress={() => void patch({ defaultTemplateId: t.id as TemplateId })}
-          style={[styles.row, settings.defaultTemplateId === t.id && styles.rowActive]}
-        >
-          <Text style={styles.rowText}>{t.label}</Text>
-        </Pressable>
-      ))}
+      <Text style={styles.section}>기본 프레임</Text>
+      <Text style={styles.sectionHint}>촬영 시 기본으로 선택됩니다. 15종.</Text>
+      <TemplatePicker
+        value={templateId}
+        onChange={(id) => void patch({ defaultTemplateId: id })}
+        variant="settings"
+      />
 
       <Text style={[styles.section, { marginTop: space.lg }]}>날짜 형식</Text>
       {(
@@ -59,7 +61,7 @@ export function SettingsScreen({ onBack }: Props) {
           <Text style={styles.rowText}>{f.label}</Text>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -67,12 +69,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  content: {
     padding: space.md,
     paddingTop: space.sm,
+    paddingBottom: space.xl,
   },
   link: { color: colors.textMuted, fontSize: 16, marginBottom: space.md },
   title: { color: colors.text, fontSize: 26, fontWeight: '700', marginBottom: space.lg },
-  section: { color: colors.textMuted, marginBottom: space.sm, fontSize: 13 },
+  section: { color: colors.textMuted, marginBottom: 4, fontSize: 13, fontWeight: '600' },
+  sectionHint: { color: colors.textMuted, marginBottom: space.sm, fontSize: 12, opacity: 0.8 },
   row: {
     padding: space.md,
     backgroundColor: colors.surface,

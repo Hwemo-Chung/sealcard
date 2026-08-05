@@ -9,8 +9,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '../components/PrimaryButton';
+import { TemplatePicker } from '../components/TemplatePicker';
 import { nowIso } from '../domain/dates';
-import { TEMPLATE_LIST } from '../domain/templates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { colors, space } from '../theme';
 
@@ -92,31 +92,22 @@ export function SealCameraScreen({
           </Pressable>
         </View>
 
-        <View style={styles.chips}>
-          {TEMPLATE_LIST.map((t) => {
-            const active = t.id === templateId;
-            return (
-              <Pressable
-                key={t.id}
-                onPress={() => setTemplateId(t.id)}
-                style={[styles.chip, active && styles.chipActive]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{t.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <View style={styles.midSpacer} />
 
-        <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) + space.md }]}>
-          <Pressable
-            onPress={() => void take()}
-            disabled={busy}
-            style={[styles.shutter, busy && { opacity: 0.5 }]}
-            accessibilityRole="button"
-            accessibilityLabel="촬영"
-          />
+        <View style={[styles.bottomBlock, { paddingBottom: Math.max(insets.bottom, space.sm) + 8 }]}>
+          <Text style={styles.frameHint}>프레임</Text>
+          <TemplatePicker value={templateId} onChange={setTemplateId} variant="camera" />
+          <View style={styles.shutterRow}>
+            <Pressable
+              onPress={() => void take()}
+              disabled={busy}
+              style={[styles.shutter, busy && { opacity: 0.5 }]}
+              accessibilityRole="button"
+              accessibilityLabel="촬영"
+            >
+              <View style={styles.shutterInner} />
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
@@ -135,41 +126,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     paddingBottom: space.sm,
   },
   topLink: { color: '#fff', fontSize: 16, minWidth: 48 },
   banner: { color: '#fff', fontSize: 12, opacity: 0.9, flex: 1, textAlign: 'center' },
-  chips: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
+  midSpacer: { flex: 1 },
+  bottomBlock: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingTop: space.sm,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  frameHint: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
     paddingHorizontal: space.md,
+    marginBottom: 6,
+    textTransform: 'uppercase',
   },
-  chip: {
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  chipActive: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  chipText: { color: '#ddd', fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  bottom: {
+  shutterRow: {
     alignItems: 'center',
+    paddingTop: space.md,
+    paddingBottom: space.sm,
   },
   shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  shutterInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: '#fff',
-    borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.4)',
   },
   center: {
     flex: 1,
