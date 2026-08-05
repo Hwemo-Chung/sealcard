@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# expo / metro
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# native build
+android/
+ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# debug / local
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.pem
+.env
+.env.*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+
+# test / local artifacts
+coverage/
+emulator-screenshot.png
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.claude/

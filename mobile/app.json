@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Sealcard",
+    "slug": "sealcard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "sealcard",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.sealcard.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "카드를 밀봉하기 위해 카메라로 사진을 찍습니다."
+      }
+    },
+    "android": {
+      "package": "app.sealcard.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0F0F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.CAMERA"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "카드를 밀봉하기 위해 카메라로 사진을 찍습니다."
+        }
+      ]
+    ]
+  }
+}

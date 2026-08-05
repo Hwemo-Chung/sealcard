@@ -1,0 +1,183 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import React, { useRef, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { PrimaryButton } from '../components/PrimaryButton';
+import { nowIso } from '../domain/dates';
+import { TEMPLATE_LIST } from '../domain/templates';
+import type { DateFormatId, TemplateId } from '../domain/types';
+import { colors, space } from '../theme';
+
+type Props = {
+  defaultTemplateId: TemplateId;
+  dateFormatId: DateFormatId;
+  onCaptured: (payload: {
+    photoUri: string;
+    templateId: TemplateId;
+    dateFormatId: DateFormatId;
+    sealedAtIso: string;
+  }) => void;
+  onCancel: () => void;
+};
+
+export function SealCameraScreen({
+  defaultTemplateId,
+  dateFormatId,
+  onCaptured,
+  onCancel,
+}: Props) {
+  const insets = useSafeAreaInsets();
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [templateId, setTemplateId] = useState<TemplateId>(defaultTemplateId);
+  const [busy, setBusy] = useState(false);
+
+  if (!permission) {
+    return <View style={styles.root} />;
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={[styles.center, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <Text style={styles.permTitle}>카메라 권한이 필요합니다</Text>
+        <Text style={styles.permBody}>사진을 찍으려면 카메라 권한이 필요합니다.</Text>
+        <PrimaryButton label="권한 허용" onPress={() => void requestPermission()} />
+        <PrimaryButton label="뒤로" onPress={onCancel} variant="ghost" style={{ marginTop: space.sm }} />
+      </View>
+    );
+  }
+
+  const take = async () => {
+    if (!cameraRef.current || busy) return;
+    setBusy(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.85,
+        skipProcessing: false,
+      });
+      if (!photo?.uri) return;
+      onCaptured({
+        photoUri: photo.uri,
+        templateId,
+        dateFormatId,
+        sealedAtIso: nowIso(),
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={styles.root}>
+      <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
+      <View style={styles.overlay} pointerEvents="box-none">
+        <View style={[styles.topBar, { paddingTop: insets.top + space.sm }]}>
+          <Pressable onPress={onCancel} accessibilityRole="button">
+            <Text style={styles.topLink}>닫기</Text>
+          </Pressable>
+          <Text style={styles.banner}>밀봉하면 수정할 수 없습니다</Text>
+          <Pressable
+            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+            accessibilityRole="button"
+            accessibilityLabel="카메라 전환"
+          >
+            <Text style={styles.topLink}>전환</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.chips}>
+          {TEMPLATE_LIST.map((t) => {
+            const active = t.id === templateId;
+            return (
+              <Pressable
+                key={t.id}
+                onPress={() => setTemplateId(t.id)}
+                style={[styles.chip, active && styles.chipActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{t.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) + space.md }]}>
+          <Pressable
+            onPress={() => void take()}
+            disabled={busy}
+            style={[styles.shutter, busy && { opacity: 0.5 }]}
+            accessibilityRole="button"
+            accessibilityLabel="촬영"
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  camera: { flex: 1 },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'space-between',
+  },
+  topBar: {
+    paddingHorizontal: space.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingBottom: space.sm,
+  },
+  topLink: { color: '#fff', fontSize: 16, minWidth: 48 },
+  banner: { color: '#fff', fontSize: 12, opacity: 0.9, flex: 1, textAlign: 'center' },
+  chips: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: space.md,
+  },
+  chip: {
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  chipActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  chipText: { color: '#ddd', fontSize: 13 },
+  chipTextActive: { color: '#fff', fontWeight: '600' },
+  bottom: {
+    alignItems: 'center',
+  },
+  shutter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#fff',
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  center: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    justifyContent: 'center',
+    padding: space.lg,
+    gap: space.md,
+  },
+  permTitle: { color: colors.text, fontSize: 20, fontWeight: '700' },
+  permBody: { color: colors.textMuted, marginBottom: space.md },
+});
