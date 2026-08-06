@@ -16,6 +16,7 @@ import { resolveTemplate } from '../domain/templates';
 import type { Binder, Card } from '../domain/types';
 import { UNCATEGORIZED_LABEL } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
+import { PresentActions } from '../presentation/PresentActions';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -99,6 +100,8 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
         {binderName} · {resolveTemplate(card.templateId).label}
       </Text>
       <Text style={styles.frozen}>사진·날짜·템플릿은 변경할 수 없습니다.</Text>
+
+      <PresentActions card={card} binderName={binderName} />
 
       <PrimaryButton
         label="다른 바인더로 이동"

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TemplatePicker } from '../components/TemplatePicker';
 import type { DateFormatId, Settings, TemplateId } from '../domain/types';
 import { isTemplateId } from '../domain/templates';
+import { WidgetHomePreview } from '../presentation/WidgetHomePreview';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -39,7 +40,7 @@ export function SettingsScreen({ onBack }: Props) {
       <Text style={styles.title}>설정</Text>
 
       <Text style={styles.section}>기본 프레임</Text>
-      <Text style={styles.sectionHint}>촬영 시 기본으로 선택됩니다. 15종.</Text>
+      <Text style={styles.sectionHint}>촬영 시 기본값. 카테고리로 고르세요.</Text>
       <TemplatePicker
         value={templateId}
         onChange={(id) => void patch({ defaultTemplateId: id })}
@@ -61,6 +62,33 @@ export function SettingsScreen({ onBack }: Props) {
           <Text style={styles.rowText}>{f.label}</Text>
         </Pressable>
       ))}
+
+      <Text style={[styles.section, { marginTop: space.lg }]}>홈 위젯</Text>
+      <Text style={styles.sectionHint}>
+        Android 홈 화면 위젯 1종. 카드 상세·전시에서 「위젯에 고정」으로 대상을 정합니다.
+      </Text>
+      <View style={styles.row}>
+        <Text style={styles.rowText}>
+          {settings.widgetCardId
+            ? `고정 카드 · ${settings.widgetCardId.slice(0, 10)}…`
+            : settings.widgetBinderId
+              ? `바인더 최신 · ${settings.widgetBinderId.slice(0, 10)}…`
+              : '미설정'}
+        </Text>
+      </View>
+      {(settings.widgetBinderId || settings.widgetCardId) && (
+        <Pressable
+          onPress={() =>
+            void patch({ widgetBinderId: null, widgetCardId: null })
+          }
+          style={[styles.row, { marginTop: space.sm }]}
+        >
+          <Text style={[styles.rowText, { color: colors.danger }]}>위젯 대상 해제</Text>
+        </Pressable>
+      )}
+      <WidgetHomePreview
+        key={`${settings.widgetBinderId ?? ''}-${settings.widgetCardId ?? ''}`}
+      />
     </ScrollView>
   );
 }

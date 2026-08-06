@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,7 +10,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { TEMPLATE_LIST, type TemplateSpec } from '../domain/templates';
+import {
+  FRAME_OVERLAYS,
+  TEMPLATE_CATEGORIES,
+  templatesInCategory,
+  type TemplateCategoryId,
+  type TemplateSpec,
+} from '../domain/templates';
 import type { TemplateId } from '../domain/types';
 import { colors, space } from '../theme';
 
@@ -22,6 +29,7 @@ type Props = {
 };
 
 function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
+  const overlay = FRAME_OVERLAYS[t.id];
   return (
     <View
       style={[
@@ -32,126 +40,238 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
           : { backgroundColor: colors.surface2 },
       ]}
     >
-      <View
-        style={[
-          styles.miniCard,
-          {
-            backgroundColor: t.background.startsWith('rgba') ? 'transparent' : t.background,
-            borderColor: t.borderColor,
-            borderWidth: Math.min(t.borderWidth, 2),
-            borderRadius: Math.min(t.cornerRadius, 10),
-          },
-        ]}
-      >
-        {/* fake photo */}
+      {overlay ? (
+        <View style={styles.miniOverlayWrap}>
+          <View
+            style={[
+              styles.miniPhotoBg,
+              { backgroundColor: t.chipFrom },
+            ]}
+          >
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: t.chipTo, opacity: 0.45 }]} />
+          </View>
+          <Image source={overlay} style={styles.miniOverlay} resizeMode="stretch" />
+        </View>
+      ) : (
         <View
           style={[
-            styles.miniPhoto,
+            styles.miniCard,
             {
-              margin: 5,
-              marginBottom: 2,
-              borderRadius: Math.min(t.photoRadius, 6),
-              backgroundColor: t.chipFrom,
+              backgroundColor: t.background.startsWith('rgba') ? 'transparent' : t.background,
+              borderColor: t.borderColor,
+              borderWidth: Math.min(t.borderWidth, 2),
+              borderRadius: Math.min(t.cornerRadius, 10),
             },
           ]}
         >
           <View
             style={[
-              StyleSheet.absoluteFill,
+              styles.miniPhoto,
               {
-                opacity: 0.55,
-                backgroundColor: t.chipTo,
+                margin: 5,
+                marginBottom: 2,
                 borderRadius: Math.min(t.photoRadius, 6),
+                backgroundColor: t.chipFrom,
               },
             ]}
-          />
+          >
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: 0.55,
+                  backgroundColor: t.chipTo,
+                  borderRadius: Math.min(t.photoRadius, 6),
+                },
+              ]}
+            />
+          </View>
+          <View style={styles.miniDateLine}>
+            <View style={[styles.miniDateBar, { backgroundColor: t.dateColor, opacity: 0.7 }]} />
+          </View>
         </View>
-        <View style={styles.miniDateLine}>
-          <View style={[styles.miniDateBar, { backgroundColor: t.dateColor, opacity: 0.7 }]} />
-        </View>
-      </View>
-      {t.style === 'glass' && (
-        <View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.25)',
-              backgroundColor: 'rgba(255,255,255,0.06)',
-            },
-          ]}
-        />
       )}
     </View>
   );
 }
 
 export function TemplatePicker({ value, onChange, variant = 'camera', style }: Props) {
-  if (variant === 'settings') {
-    return (
-      <View style={style}>
-        {TEMPLATE_LIST.map((t) => {
-          const active = t.id === value;
-          return (
-            <Pressable
-              key={t.id}
-              onPress={() => onChange(t.id)}
-              style={[styles.settingsRow, active && styles.settingsRowActive]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-            >
-              <MiniFrame t={t} active={active} />
-              <View style={styles.settingsText}>
-                <Text style={styles.settingsLabel}>{t.label}</Text>
-                <Text style={styles.settingsSub}>{t.subtitle}</Text>
-              </View>
-              {active && <Text style={styles.check}>✓</Text>}
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  }
+  const activeCat = useMemo(() => {
+    const list = templatesInCategory('all');
+    return list.find((t) => t.id === value)?.category ?? 'instant';
+  }, [value]);
 
-  return (
+  const [category, setCategory] = useState<TemplateCategoryId | 'all'>(activeCat);
+  const items = templatesInCategory(category === 'all' ? 'all' : category);
+
+  const settingsMode = variant === 'settings';
+  const catChips = (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.cameraRow}
-      style={style}
+      contentContainerStyle={styles.catRow}
     >
-      {TEMPLATE_LIST.map((t) => {
-        const active = t.id === value;
+      <Pressable
+        onPress={() => setCategory('all')}
+        style={[
+          styles.catChip,
+          settingsMode && styles.catChipSettings,
+          category === 'all' && (settingsMode ? styles.catChipActiveSettings : styles.catChipActive),
+        ]}
+        accessibilityRole="button"
+        accessibilityState={{ selected: category === 'all' }}
+      >
+        <Text
+          style={[
+            styles.catText,
+            settingsMode && styles.catTextSettings,
+            category === 'all' && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
+          ]}
+        >
+          전체
+        </Text>
+      </Pressable>
+      {TEMPLATE_CATEGORIES.map((c) => {
+        const on = category === c.id;
         return (
           <Pressable
-            key={t.id}
-            onPress={() => onChange(t.id)}
-            style={styles.cameraItem}
+            key={c.id}
+            onPress={() => setCategory(c.id)}
+            style={[
+              styles.catChip,
+              settingsMode && styles.catChipSettings,
+              on && (settingsMode ? styles.catChipActiveSettings : styles.catChipActive),
+            ]}
             accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={t.label}
+            accessibilityState={{ selected: on }}
           >
-            <MiniFrame t={t} active={active} />
-            <Text style={[styles.cameraLabel, active && styles.cameraLabelActive]} numberOfLines={1}>
-              {t.label}
+            <Text
+              style={[
+                styles.catText,
+                settingsMode && styles.catTextSettings,
+                on && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
+              ]}
+            >
+              {c.label}
             </Text>
           </Pressable>
         );
       })}
     </ScrollView>
   );
+
+  if (variant === 'settings') {
+    return (
+      <View style={style}>
+        {catChips}
+        <View style={styles.settingsGrid}>
+          {items.map((t) => {
+            const active = t.id === value;
+            return (
+              <Pressable
+                key={t.id}
+                onPress={() => onChange(t.id)}
+                style={[styles.settingsCell, active && styles.settingsCellActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <MiniFrame t={t} active={active} />
+                <Text style={styles.settingsLabel} numberOfLines={1}>
+                  {t.label}
+                </Text>
+                <Text style={styles.settingsSub} numberOfLines={1}>
+                  {t.subtitle}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={style}>
+      {catChips}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.cameraRow}
+      >
+        {items.map((t) => {
+          const active = t.id === value;
+          return (
+            <Pressable
+              key={t.id}
+              onPress={() => onChange(t.id)}
+              style={styles.cameraItem}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={t.label}
+            >
+              <MiniFrame t={t} active={active} />
+              <Text
+                style={[styles.cameraLabel, active && styles.cameraLabelActive]}
+                numberOfLines={1}
+              >
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  catRow: {
+    paddingHorizontal: space.md,
+    gap: 8,
+    paddingBottom: 8,
+    alignItems: 'center',
+  },
+  catChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  catChipActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(232,226,217,0.18)',
+  },
+  catChipSettings: {
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  catChipActiveSettings: {
+    borderColor: colors.accent,
+    backgroundColor: colors.surface2,
+  },
+  catText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  catTextActive: {
+    color: '#fff',
+  },
+  catTextSettings: {
+    color: colors.textMuted,
+  },
+  catTextActiveSettings: {
+    color: colors.text,
+  },
   cameraRow: {
     paddingHorizontal: space.md,
     gap: 12,
     alignItems: 'flex-end',
   },
   cameraItem: {
-    width: 72,
+    width: 76,
     alignItems: 'center',
   },
   cameraLabel: {
@@ -168,7 +288,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 78,
     borderRadius: 12,
-    padding: 6,
+    padding: 4,
     borderWidth: 2,
     borderColor: 'transparent',
     justifyContent: 'center',
@@ -177,6 +297,24 @@ const styles = StyleSheet.create({
   },
   miniOuterActive: {
     borderColor: colors.accent,
+  },
+  miniOverlayWrap: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  miniPhotoBg: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: 6,
+    bottom: 14,
+    borderRadius: 2,
+  },
+  miniOverlay: {
+    width: '100%',
+    height: '100%',
   },
   miniCard: {
     width: '100%',
@@ -197,23 +335,38 @@ const styles = StyleSheet.create({
     width: '55%',
     borderRadius: 1,
   },
-  settingsRow: {
+  settingsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginTop: space.sm,
+  },
+  settingsCell: {
+    width: '48%',
+    flexGrow: 1,
+    maxWidth: '48%',
     padding: space.sm,
-    marginBottom: space.sm,
     borderRadius: 14,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: space.md,
+    alignItems: 'center',
   },
-  settingsRowActive: {
+  settingsCellActive: {
     borderColor: colors.accent,
     backgroundColor: colors.surface2,
   },
-  settingsText: { flex: 1 },
-  settingsLabel: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  settingsSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  check: { color: colors.accent, fontSize: 18, fontWeight: '700', marginRight: 4 },
+  settingsLabel: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  settingsSub: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
+  },
 });

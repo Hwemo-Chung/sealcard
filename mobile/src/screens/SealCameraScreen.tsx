@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TemplatePicker } from '../components/TemplatePicker';
-import { nowIso } from '../domain/dates';
+import { formatSealDate, nowIso } from '../domain/dates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { colors, space } from '../theme';
 
@@ -82,7 +82,10 @@ export function SealCameraScreen({
           <Pressable onPress={onCancel} accessibilityRole="button">
             <Text style={styles.topLink}>닫기</Text>
           </Pressable>
-          <Text style={styles.banner}>밀봉하면 수정할 수 없습니다</Text>
+          <View style={styles.bannerCol}>
+            <Text style={styles.banner}>밀봉하면 수정할 수 없습니다</Text>
+            <Text style={styles.datePreview}>{formatSealDate(nowIso(), dateFormatId)}</Text>
+          </View>
           <Pressable
             onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
             accessibilityRole="button"
@@ -130,7 +133,15 @@ const styles = StyleSheet.create({
     paddingBottom: space.sm,
   },
   topLink: { color: '#fff', fontSize: 16, minWidth: 48 },
-  banner: { color: '#fff', fontSize: 12, opacity: 0.9, flex: 1, textAlign: 'center' },
+  bannerCol: { flex: 1, alignItems: 'center' },
+  banner: { color: '#fff', fontSize: 12, opacity: 0.9, textAlign: 'center' },
+  datePreview: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
+    letterSpacing: 0.6,
+  },
   midSpacer: { flex: 1 },
   bottomBlock: {
     backgroundColor: 'rgba(0,0,0,0.55)',

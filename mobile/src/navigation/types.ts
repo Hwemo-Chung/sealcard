@@ -3,7 +3,7 @@ import type { DateFormatId, TemplateId } from '../domain/types';
 export type RootScreen =
   | { name: 'binders' }
   | { name: 'binderDetail'; binderId: string | null }
-  | { name: 'cardDetail'; cardId: string }
+  | { name: 'cardDetail'; cardId: string; fromBinderId?: string | null }
   | { name: 'sealCamera' }
   | {
       name: 'sealPreview';

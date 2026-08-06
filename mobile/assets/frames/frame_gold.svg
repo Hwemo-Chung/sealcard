@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <!-- Sealcard frame overlay. Photo hole is transparent (no fill). -->
+  <rect width="800" height="1000" rx="8" fill="#1C1812"/>
+  <rect x="6" y="6" width="788" height="988" rx="6" fill="none" stroke="#C9A227" stroke-width="4"/>
+</svg>

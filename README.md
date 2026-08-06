@@ -9,18 +9,21 @@
 
 | 경로 | 내용 |
 |------|------|
-| [docs/PRD.md](./docs/PRD.md) | PRD — Musk 5단계 + Taste 벤치 + MVP |
-| [mobile/](./mobile/) | **구현** — Expo + TypeScript (네이티브 모듈) |
+| [docs/PRD.md](./docs/PRD.md) | PRD v0.2 — 코어 + §14 전시·제시 |
+| [research/frame-benchmark-2026-08-06.md](./research/frame-benchmark-2026-08-06.md) | 프레임·전시 벤치 |
+| [mobile/](./mobile/) | **구현** — Expo + TypeScript |
 | [mobile/README.md](./mobile/README.md) | 실행 방법 |
+| [mobile/assets/frames/](./mobile/assets/frames/) | 템플릿 SVG + 투명 PNG 오버레이 |
 
 ## 상태
 
-- M1–M3 코어 루프 구현 (`mobile/`)
+- 코어 루프: 촬영 → 미리보기 → 밀봉 → 바인더 그리드
+- 전시·제시: `그리드 | 전시` · 이미지 공유 · 배경 저장 · 위젯 대상/미리보기
 - 스택: TypeScript · React Native (Expo) · 로컬 전용
 
 ## 한 줄 루프
 
-`촬영 → 미리보기 → 밀봉 → 바인더 → 그리드`
+`촬영 → 미리보기 → 밀봉 → 바인더 → 그리드 | 전시`
 
 ```bash
 cd mobile && npm install && npm run android

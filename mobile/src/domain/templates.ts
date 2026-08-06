@@ -11,11 +11,33 @@ export type FrameStyle =
   | 'postage'
   | 'soft';
 
+/** Picker category chips — keeps 15 frames scannable */
+export type TemplateCategoryId =
+  | 'instant'
+  | 'glass'
+  | 'gallery'
+  | 'film'
+  | 'play';
+
+export const TEMPLATE_CATEGORIES: {
+  id: TemplateCategoryId;
+  label: string;
+}[] = [
+  { id: 'instant', label: '인스턴트' },
+  { id: 'glass', label: '글라스' },
+  { id: 'gallery', label: '갤러리' },
+  { id: 'film', label: '필름·티켓' },
+  { id: 'play', label: '플레이' },
+];
+
 export interface TemplateSpec {
   id: TemplateId;
   label: string;
   subtitle: string;
+  category: TemplateCategoryId;
   style: FrameStyle;
+  /** Transparent PNG overlay under assets/frames/ */
+  overlayAsset?: number;
   /** Outer card aspect: width / height */
   aspect: number;
   /** Photo area inset as fraction of card width */
@@ -49,11 +71,33 @@ export interface TemplateSpec {
   chipTo: string;
 }
 
+/** require() map — Metro needs static requires */
+export const FRAME_OVERLAYS: Partial<Record<TemplateId, number>> = {
+  polaroid: require('../../assets/frames/polaroid.png'),
+  polaroid_cream: require('../../assets/frames/polaroid_cream.png'),
+  polaroid_black: require('../../assets/frames/polaroid_black.png'),
+  glass: require('../../assets/frames/glass.png'),
+  glass_aurora: require('../../assets/frames/glass_aurora.png'),
+  frame_dark: require('../../assets/frames/frame_dark.png'),
+  frame_gold: require('../../assets/frames/frame_gold.png'),
+  frame_wood: require('../../assets/frames/frame_wood.png'),
+  minimal: require('../../assets/frames/minimal.png'),
+  matte_gallery: require('../../assets/frames/matte_gallery.png'),
+  film_strip: require('../../assets/frames/film_strip.png'),
+  ticket: require('../../assets/frames/ticket.png'),
+  neon: require('../../assets/frames/neon.png'),
+  postage: require('../../assets/frames/postage.png'),
+  soft_round: require('../../assets/frames/soft_round.png'),
+};
+
+export const PRESENTATION_MATTE = require('../../assets/frames/presentation_matte.png');
+
 export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   polaroid: {
     id: 'polaroid',
     label: '폴라로이드',
     subtitle: '클래식 흰 테두리',
+    category: 'instant',
     style: 'polaroid',
     aspect: 0.8,
     photoInset: 0.055,
@@ -75,6 +119,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'polaroid_cream',
     label: '크림 폴라',
     subtitle: '따뜻한 아이보리',
+    category: 'instant',
     style: 'polaroid',
     aspect: 0.78,
     photoInset: 0.06,
@@ -96,6 +141,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'polaroid_black',
     label: '블랙 폴라',
     subtitle: '어두운 인스턴트',
+    category: 'instant',
     style: 'polaroid',
     aspect: 0.8,
     photoInset: 0.05,
@@ -117,6 +163,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'glass',
     label: '글라스',
     subtitle: '글라스모피즘',
+    category: 'glass',
     style: 'glass',
     aspect: 0.82,
     photoInset: 0.07,
@@ -142,6 +189,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'glass_aurora',
     label: '오로라 글라스',
     subtitle: '보랏빛 유리',
+    category: 'glass',
     style: 'glass',
     aspect: 0.8,
     photoInset: 0.075,
@@ -167,6 +215,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'frame_dark',
     label: '다크 프레임',
     subtitle: '갤러리 블랙',
+    category: 'gallery',
     style: 'matte',
     aspect: 0.75,
     photoInset: 0.08,
@@ -189,6 +238,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'frame_gold',
     label: '골드 프레임',
     subtitle: '오너먼트 금테',
+    category: 'gallery',
     style: 'ornate',
     aspect: 0.72,
     photoInset: 0.09,
@@ -213,6 +263,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'frame_wood',
     label: '우드 프레임',
     subtitle: '따뜻한 나무 톤',
+    category: 'gallery',
     style: 'ornate',
     aspect: 0.74,
     photoInset: 0.085,
@@ -238,6 +289,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'minimal',
     label: '미니멀',
     subtitle: '얇은 화이트',
+    category: 'gallery',
     style: 'matte',
     aspect: 0.85,
     photoInset: 0.028,
@@ -259,6 +311,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'matte_gallery',
     label: '갤러리 매트',
     subtitle: '넓은 여백',
+    category: 'gallery',
     style: 'matte',
     aspect: 0.7,
     photoInset: 0.12,
@@ -281,6 +334,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'film_strip',
     label: '필름 스트립',
     subtitle: '스프로켓 홀',
+    category: 'film',
     style: 'film',
     aspect: 0.7,
     photoInset: 0.11,
@@ -303,6 +357,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'ticket',
     label: '티켓',
     subtitle: '스텁 컷 감성',
+    category: 'film',
     style: 'ticket',
     aspect: 0.62,
     photoInset: 0.06,
@@ -325,6 +380,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'neon',
     label: '네온',
     subtitle: '야광 보더',
+    category: 'play',
     style: 'neon',
     aspect: 0.8,
     photoInset: 0.06,
@@ -348,6 +404,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'postage',
     label: '우표',
     subtitle: '톱니 가장자리',
+    category: 'film',
     style: 'postage',
     aspect: 0.78,
     photoInset: 0.1,
@@ -370,6 +427,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'soft_round',
     label: '소프트 라운드',
     subtitle: '둥근 카드',
+    category: 'play',
     style: 'soft',
     aspect: 0.84,
     photoInset: 0.05,
@@ -414,4 +472,13 @@ export function resolveTemplate(id: string | undefined | null): TemplateSpec {
 
 export function isTemplateId(id: string): id is TemplateId {
   return id in TEMPLATES;
+}
+
+export function templatesInCategory(cat: TemplateCategoryId | 'all'): TemplateSpec[] {
+  if (cat === 'all') return TEMPLATE_LIST;
+  return TEMPLATE_LIST.filter((t) => t.category === cat);
+}
+
+export function frameOverlaySource(id: TemplateId | string): number | undefined {
+  return FRAME_OVERLAYS[id as TemplateId];
 }

@@ -73,14 +73,30 @@ export default function App() {
             <BinderDetailScreen
               binderId={screen.binderId}
               onBack={goBinders}
-              onOpenCard={(cardId) => setScreen({ name: 'cardDetail', cardId })}
+              onOpenCard={(cardId) =>
+                setScreen({
+                  name: 'cardDetail',
+                  cardId,
+                  fromBinderId: screen.binderId,
+                })
+              }
             />
           )}
           {screen.name === 'cardDetail' && (
             <CardDetailScreen
               cardId={screen.cardId}
-              onBack={goBinders}
-              onDestroyed={goBinders}
+              onBack={() =>
+                setScreen({
+                  name: 'binderDetail',
+                  binderId: screen.fromBinderId ?? null,
+                })
+              }
+              onDestroyed={() =>
+                setScreen({
+                  name: 'binderDetail',
+                  binderId: screen.fromBinderId ?? null,
+                })
+              }
             />
           )}
           {screen.name === 'sealPreview' && (

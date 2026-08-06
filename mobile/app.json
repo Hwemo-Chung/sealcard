@@ -22,7 +22,9 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -33,6 +35,15 @@
         "expo-camera",
         {
           "cameraPermission": "카드를 밀봉하기 위해 카메라로 사진을 찍습니다."
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "배경화면·공유용 전시 이미지를 저장합니다.",
+          "savePhotosPermission": "배경화면·공유용 전시 이미지를 저장합니다.",
+          "isAccessMediaLocationEnabled": false
         }
       ]
     ]

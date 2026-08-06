@@ -160,6 +160,7 @@ export interface SealInput {
 /**
  * Seal a card: persist composite file + immutable row.
  * No update path for image/template/date exists by design.
+ * On DB failure after file write, deletes partial file (rollback).
  */
 export async function sealCard(input: SealInput): Promise<Card> {
   const db = await readDb();
@@ -180,8 +181,17 @@ export async function sealCard(input: SealInput): Promise<Card> {
     height: input.height,
   };
 
-  db.cards.push(card);
-  await writeDb(db);
+  try {
+    db.cards.push(card);
+    await writeDb(db);
+  } catch (e) {
+    try {
+      await FileSystem.deleteAsync(dest, { idempotent: true });
+    } catch {
+      // ignore cleanup errors
+    }
+    throw e;
+  }
   return card;
 }
 
@@ -193,12 +203,15 @@ export async function moveCard(cardId: CardId, binderId: BinderId | null): Promi
   await writeDb(db);
 }
 
-/** Destroy card permanently — no undo. */
+/** Destroy card permanently — no undo. Clears widget pointer if needed. */
 export async function destroyCard(cardId: CardId): Promise<void> {
   const db = await readDb();
   const c = db.cards.find((x) => x.id === cardId);
   if (!c) return;
   db.cards = db.cards.filter((x) => x.id !== cardId);
+  if (db.settings.widgetCardId === cardId) {
+    db.settings.widgetCardId = null;
+  }
   await writeDb(db);
   try {
     const info = await FileSystem.getInfoAsync(c.imagePath);
@@ -206,4 +219,18 @@ export async function destroyCard(cardId: CardId): Promise<void> {
   } catch {
     // file may already be gone
   }
+}
+
+/** Card for home widget (P3). Fixed card or latest in binder. */
+export async function resolveWidgetCard(): Promise<Card | null> {
+  const db = await readDb();
+  const { widgetCardId, widgetBinderId } = db.settings;
+  if (widgetCardId) {
+    return db.cards.find((c) => c.id === widgetCardId) ?? null;
+  }
+  if (widgetBinderId == null) return null;
+  const cards = db.cards
+    .filter((c) => c.binderId === widgetBinderId)
+    .sort((a, b) => new Date(b.sealedAt).getTime() - new Date(a.sealedAt).getTime());
+  return cards[0] ?? null;
 }

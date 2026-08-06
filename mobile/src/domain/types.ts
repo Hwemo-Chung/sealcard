@@ -42,6 +42,10 @@ export interface Card {
 export interface Settings {
   defaultTemplateId: TemplateId;
   dateFormatId: DateFormatId;
+  /** P3 home widget pointer — null = unset */
+  widgetBinderId?: BinderId | null;
+  /** null = latest card in widgetBinderId */
+  widgetCardId?: CardId | null;
 }
 
 export interface DbSnapshot {
@@ -56,4 +60,9 @@ export const UNCATEGORIZED_LABEL = '미분류';
 export const DEFAULT_SETTINGS: Settings = {
   defaultTemplateId: 'polaroid',
   dateFormatId: 'dot',
+  widgetBinderId: null,
+  widgetCardId: null,
 };
+
+/** Presentation renderer output profile (§14.3) */
+export type PresentationProfile = 'screen' | 'share' | 'wallpaper' | 'widget';
