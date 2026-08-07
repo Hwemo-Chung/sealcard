@@ -32,7 +32,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "tsx --test src/**/*.test.ts src/i18n/keys.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:android": "eas build --platform android --profile production",
+    "submit:android": "eas submit --platform android --profile production"
   },
   "private": true
 }
