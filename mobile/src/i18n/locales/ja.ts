@@ -52,6 +52,10 @@ export const ja: TranslationTree = {
     flipA11y: 'カメラを切替',
     frame: 'フレーム',
     shutterA11y: 'シャッター',
+    expandPicker: 'タップで開く',
+    collapsePicker: '閉じる',
+    expandPickerA11y: 'フレーム選択を開く',
+    collapsePickerA11y: 'フレーム選択を閉じる',
   },
   sealPreview: {
     title: 'プレビュー',

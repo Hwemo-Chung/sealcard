@@ -50,6 +50,10 @@ export const en = {
     flipA11y: 'Switch camera',
     frame: 'Frame',
     shutterA11y: 'Shutter',
+    expandPicker: 'Tap to expand',
+    collapsePicker: 'Collapse',
+    expandPickerA11y: 'Expand frame picker',
+    collapsePickerA11y: 'Collapse frame picker',
   },
   sealPreview: {
     title: 'Preview',

@@ -52,6 +52,10 @@ export const ko: TranslationTree = {
     flipA11y: '카메라 전환',
     frame: '프레임',
     shutterA11y: '촬영',
+    expandPicker: '탭하여 펼치기',
+    collapsePicker: '접기',
+    expandPickerA11y: '프레임 선택 펼치기',
+    collapsePickerA11y: '프레임 선택 접기',
   },
   sealPreview: {
     title: '미리보기',

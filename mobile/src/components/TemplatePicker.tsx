@@ -26,15 +26,26 @@ type Props = {
   onChange: (id: TemplateId) => void;
   /** compact chips for camera; cards for settings */
   variant?: 'camera' | 'settings';
+  /** smaller camera chips when panel is expanded but height-limited */
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-function MiniFrame({ spec, active }: { spec: TemplateSpec; active: boolean }) {
+function MiniFrame({
+  spec,
+  active,
+  compact,
+}: {
+  spec: TemplateSpec;
+  active: boolean;
+  compact?: boolean;
+}) {
   const overlay = FRAME_OVERLAYS[spec.id];
   return (
     <View
       style={[
         styles.miniOuter,
+        compact && styles.miniOuterCompact,
         active && styles.miniOuterActive,
         spec.style === 'glass' || spec.style === 'neon'
           ? { backgroundColor: '#1a1f2e' }
@@ -96,7 +107,13 @@ function MiniFrame({ spec, active }: { spec: TemplateSpec; active: boolean }) {
   );
 }
 
-export function TemplatePicker({ value, onChange, variant = 'camera', style }: Props) {
+export function TemplatePicker({
+  value,
+  onChange,
+  variant = 'camera',
+  compact = false,
+  style,
+}: Props) {
   const { t } = useI18n();
   const activeCat = useMemo(() => {
     const list = templatesInCategory('all');
@@ -111,12 +128,13 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.catRow}
+      contentContainerStyle={[styles.catRow, compact && styles.catRowCompact]}
     >
       <Pressable
         onPress={() => setCategory('all')}
         style={[
           styles.catChip,
+          compact && styles.catChipCompact,
           settingsMode && styles.catChipSettings,
           category === 'all' && (settingsMode ? styles.catChipActiveSettings : styles.catChipActive),
         ]}
@@ -126,6 +144,7 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
         <Text
           style={[
             styles.catText,
+            compact && styles.catTextCompact,
             settingsMode && styles.catTextSettings,
             category === 'all' && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
           ]}
@@ -141,6 +160,7 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
             onPress={() => setCategory(id)}
             style={[
               styles.catChip,
+              compact && styles.catChipCompact,
               settingsMode && styles.catChipSettings,
               on && (settingsMode ? styles.catChipActiveSettings : styles.catChipActive),
             ]}
@@ -150,6 +170,7 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
             <Text
               style={[
                 styles.catText,
+                compact && styles.catTextCompact,
                 settingsMode && styles.catTextSettings,
                 on && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
               ]}
@@ -200,7 +221,7 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.cameraRow}
+        contentContainerStyle={[styles.cameraRow, compact && styles.cameraRowCompact]}
       >
         {items.map((spec) => {
           const active = spec.id === value;
@@ -209,14 +230,18 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
             <Pressable
               key={spec.id}
               onPress={() => onChange(spec.id)}
-              style={styles.cameraItem}
+              style={[styles.cameraItem, compact && styles.cameraItemCompact]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={label}
             >
-              <MiniFrame spec={spec} active={active} />
+              <MiniFrame spec={spec} active={active} compact={compact} />
               <Text
-                style={[styles.cameraLabel, active && styles.cameraLabelActive]}
+                style={[
+                  styles.cameraLabel,
+                  compact && styles.cameraLabelCompact,
+                  active && styles.cameraLabelActive,
+                ]}
                 numberOfLines={1}
               >
                 {label}
@@ -236,6 +261,10 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     alignItems: 'center',
   },
+  catRowCompact: {
+    paddingBottom: 4,
+    gap: 6,
+  },
   catChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -243,6 +272,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
     backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  catChipCompact: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   catChipActive: {
     borderColor: colors.accent,
@@ -261,6 +294,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  catTextCompact: {
+    fontSize: 11,
+  },
   catTextActive: {
     color: '#fff',
   },
@@ -275,15 +311,25 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'flex-end',
   },
+  cameraRowCompact: {
+    gap: 8,
+  },
   cameraItem: {
     width: 76,
     alignItems: 'center',
+  },
+  cameraItemCompact: {
+    width: 56,
   },
   cameraLabel: {
     marginTop: 6,
     color: 'rgba(255,255,255,0.65)',
     fontSize: 11,
     fontWeight: '500',
+  },
+  cameraLabelCompact: {
+    marginTop: 4,
+    fontSize: 10,
   },
   cameraLabelActive: {
     color: '#fff',
@@ -299,6 +345,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+  },
+  miniOuterCompact: {
+    width: 48,
+    height: 58,
+    borderRadius: 10,
+    padding: 3,
   },
   miniOuterActive: {
     borderColor: colors.accent,
