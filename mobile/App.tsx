@@ -88,6 +88,7 @@ export default function App() {
               {screen.name === 'cardDetail' && (
                 <CardDetailScreen
                   cardId={screen.cardId}
+                  binderId={screen.fromBinderId}
                   onBack={() =>
                     setScreen({
                       name: 'binderDetail',

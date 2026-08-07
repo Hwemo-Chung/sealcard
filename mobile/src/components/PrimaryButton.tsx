@@ -15,6 +15,8 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'ghost' | 'danger';
+  /** Compact height for secondary toolbars (card detail actions). */
+  size?: 'md' | 'sm';
   style?: ViewStyle;
   accessibilityLabel?: string;
 };
@@ -25,11 +27,13 @@ export function PrimaryButton({
   disabled,
   loading,
   variant = 'primary',
+  size = 'md',
   style,
   accessibilityLabel,
 }: Props) {
   const isPrimary = variant === 'primary';
   const isDanger = variant === 'danger';
+  const sm = size === 'sm';
 
   return (
     <Pressable
@@ -39,6 +43,7 @@ export function PrimaryButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
+        sm && styles.baseSm,
         isPrimary && styles.primary,
         variant === 'ghost' && styles.ghost,
         isDanger && styles.danger,
@@ -48,11 +53,15 @@ export function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.primaryText : colors.text} />
+        <ActivityIndicator
+          color={isPrimary ? colors.primaryText : colors.text}
+          size={sm ? 'small' : 'small'}
+        />
       ) : (
         <Text
           style={[
             styles.label,
+            sm && styles.labelSm,
             isPrimary && styles.labelPrimary,
             isDanger && styles.labelDanger,
             variant === 'ghost' && styles.labelGhost,
@@ -73,6 +82,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  baseSm: {
+    minHeight: 34,
+    paddingHorizontal: space.md,
+    borderRadius: 8,
+  },
   primary: {
     backgroundColor: colors.primary,
   },
@@ -92,6 +106,10 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  labelSm: {
+    fontSize: 13,
     fontWeight: '600',
   },
   labelPrimary: {

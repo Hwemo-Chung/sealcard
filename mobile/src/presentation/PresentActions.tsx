@@ -17,7 +17,7 @@ import { PresentationStage } from './PresentationStage';
 type Props = {
   card: Card;
   binderName: string;
-  /** hide off-screen stage after actions */
+  /** Smaller buttons for card detail toolbar */
   compact?: boolean;
 };
 
@@ -25,14 +25,14 @@ type Props = {
  * Share / wallpaper / widget pin from card detail.
  * Off-screen PresentationStage is captured for share/wallpaper (temp only).
  */
-export function PresentActions({ card, binderName, compact }: Props) {
+export function PresentActions({ card, binderName, compact = true }: Props) {
   const { t } = useI18n();
   const stageRef = useRef<View>(null);
   const [busy, setBusy] = useState<'share' | 'wall' | 'widget' | null>(null);
   const name = binderName || t('cardDetail.uncategorized');
+  const btnSize = compact ? 'sm' : 'md';
 
   const runCapture = async (profile: 'share' | 'wallpaper') => {
-    // wait a frame so offscreen stage lays out
     await new Promise((r) => setTimeout(r, 80));
     return capturePresentationTemp(stageRef, profile);
   };
@@ -113,9 +113,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
   };
 
   return (
-    <View style={styles.wrap}>
-      {/* Off-screen capture target — fixed size for consistent share/wallpaper output */}
-      {/* Capture target: sealed card as-is on dark ground (matches in-app exhibit). */}
+    <View style={[styles.wrap, compact && styles.wrapCompact]}>
       <View style={styles.offscreen} pointerEvents="none">
         <PresentationStage
           ref={stageRef}
@@ -134,6 +132,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
         onPress={() => void onShare()}
         loading={busy === 'share'}
         variant="ghost"
+        size={btnSize}
         accessibilityLabel={t('present.shareA11y')}
         style={styles.btn}
       />
@@ -142,6 +141,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
         onPress={() => void onWallpaper()}
         loading={busy === 'wall'}
         variant="ghost"
+        size={btnSize}
         accessibilityLabel={t('present.wallpaperA11y')}
         style={styles.btn}
       />
@@ -150,21 +150,21 @@ export function PresentActions({ card, binderName, compact }: Props) {
         onPress={onWidget}
         loading={busy === 'widget'}
         variant="ghost"
+        size={btnSize}
         accessibilityLabel={t('present.widgetPinA11y')}
         style={styles.btn}
       />
-      {compact ? null : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: space.sm, marginTop: space.md },
+  wrapCompact: { gap: 6, marginTop: space.sm },
   btn: { alignSelf: 'stretch' },
   offscreen: {
     position: 'absolute',
     left: -4000,
     top: 0,
-    // opacity must stay 1 — view-shot often captures blank if invisible
   },
 });
