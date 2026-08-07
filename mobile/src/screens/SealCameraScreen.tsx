@@ -58,37 +58,29 @@ function FrameGuide({
 
   const dateStr = formatSealDate(nowIso(), dateFormatId);
   const dateBandPx = guideH * spec.dateBand;
-  const photoBottom = dateBandPx;
 
   return (
-    <View style={[styles.guideOuter, { width: guideW, height: guideH }]} pointerEvents="none">
-      {/* Photo window hint — slight dim outside simulated inset */}
-      <View
-        style={[
-          styles.guidePhotoSlot,
-          {
-            top: guideW * spec.photoInset * 0.35,
-            left: guideW * spec.photoInset,
-            right: guideW * spec.photoInset,
-            bottom: photoBottom + guideW * spec.photoInset * 0.2,
-            borderRadius: Math.min(spec.photoRadius, 8),
-            borderColor: 'rgba(255,255,255,0.35)',
-          },
-        ]}
-      />
+    <View
+      style={[styles.guideOuter, { width: guideW, height: guideH }]}
+      pointerEvents="none"
+      collapsable={false}
+    >
+      {/* Full-bleed frame PNG (transparent center = viewfinder) */}
       {overlay ? (
-        <Image source={overlay} style={StyleSheet.absoluteFill} resizeMode="stretch" />
+        <Image
+          source={overlay}
+          style={{ width: guideW, height: guideH }}
+          resizeMode="stretch"
+        />
       ) : (
         <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderWidth: Math.max(2, spec.borderWidth),
-              borderColor: spec.borderColor,
-              borderRadius: Math.min(spec.cornerRadius, 12),
-              backgroundColor: 'transparent',
-            },
-          ]}
+          style={{
+            width: guideW,
+            height: guideH,
+            borderWidth: Math.max(2, spec.borderWidth),
+            borderColor: spec.borderColor,
+            borderRadius: Math.min(spec.cornerRadius, 12),
+          }}
         />
       )}
       <View
@@ -110,7 +102,8 @@ function FrameGuide({
           style={[
             styles.guideDate,
             {
-              color: spec.dateColor.startsWith('#') ? 'rgba(255,255,255,0.9)' : '#fff',
+              // dark ink on light mats; light ink on dark mats
+              color: isLightHex(spec.background) ? '#2A2620' : 'rgba(255,255,255,0.92)',
               fontWeight: spec.dateWeight,
               letterSpacing: spec.dateLetterSpacing,
               fontSize: Math.max(11, guideW * 0.045),
@@ -123,6 +116,14 @@ function FrameGuide({
       </View>
     </View>
   );
+}
+
+function isLightHex(bg: string): boolean {
+  if (!bg.startsWith('#') || bg.length < 7) return true;
+  const r = parseInt(bg.slice(1, 3), 16);
+  const g = parseInt(bg.slice(3, 5), 16);
+  const b = parseInt(bg.slice(5, 7), 16);
+  return (r + g + b) / 3 > 140;
 }
 
 export function SealCameraScreen({
@@ -323,13 +324,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   guideOuter: {
-    overflow: 'hidden',
     borderRadius: 4,
-  },
-  guidePhotoSlot: {
-    position: 'absolute',
-    borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
   },
   guideDateBand: {
     position: 'absolute',
