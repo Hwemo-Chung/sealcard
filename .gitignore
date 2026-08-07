@@ -42,3 +42,5 @@ emulator-screenshot.png
 .vscode/
 *.swp
 .claude/
+
+.worktrees/
