@@ -202,14 +202,25 @@ export function CardDetailScreen({
         </Text>
         <Text style={styles.frozen}>{t('cardDetail.frozen')}</Text>
 
-        <PresentActions card={card} binderName={binderName} compact />
+        {/* 한 줄: 공유 | 파기 */}
+        <View style={styles.actionRow}>
+          <PresentActions card={card} binderName={binderName} compact style={styles.actionHalf} />
+          <PrimaryButton
+            label={t('cardDetail.destroy')}
+            onPress={destroy}
+            variant="danger"
+            size="sm"
+            style={styles.actionHalf}
+            accessibilityLabel={t('cardDetail.destroyA11y')}
+          />
+        </View>
 
         <PrimaryButton
           label={t('cardDetail.move')}
           onPress={() => setShowMove((s) => !s)}
           variant="ghost"
           size="sm"
-          style={{ marginTop: space.sm }}
+          style={{ marginTop: 6 }}
         />
         {showMove && (
           <View style={styles.moveList}>
@@ -223,15 +234,6 @@ export function CardDetailScreen({
             </Pressable>
           </View>
         )}
-
-        <PrimaryButton
-          label={t('cardDetail.destroy')}
-          onPress={destroy}
-          variant="danger"
-          size="sm"
-          style={{ marginTop: 6 }}
-          accessibilityLabel={t('cardDetail.destroyA11y')}
-        />
       </ScrollView>
     </View>
   );
@@ -276,7 +278,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     marginTop: 6,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionHalf: {
+    flex: 1,
+    alignSelf: 'stretch',
   },
   moveList: { marginTop: 6, gap: 4 },
   moveRow: {
