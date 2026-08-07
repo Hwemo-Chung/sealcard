@@ -29,7 +29,7 @@ type Props = {
 type Mode = 'grid' | 'wall';
 
 export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [title, setTitle] = useState('');
   const [cards, setCards] = useState<Card[]>([]);
   const [mode, setMode] = useState<Mode>('grid');
@@ -46,7 +46,8 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
       setTitle(b?.name ?? t('binderDetail.fallbackTitle'));
     }
     setCards(await repo.listCards(binderId));
-  }, [binderId, t]);
+    // locale (not t): t is a stable translate ref; locale change must recompute labels
+  }, [binderId, locale, t]);
 
   useFocusEffect(reload);
 

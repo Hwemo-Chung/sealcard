@@ -12,9 +12,10 @@ import { PresentationStage } from './PresentationStage';
  * Native Android App Widget still needs a dev-client module; this is the same renderer.
  */
 export function WidgetHomePreview() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [card, setCard] = useState<Card | null>(null);
-  const [binderName, setBinderName] = useState(() => t('cardDetail.uncategorized'));
+  // Real binder names live in state; uncategorized falls back at render via locale-aware t()
+  const [binderName, setBinderName] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -23,12 +24,12 @@ export function WidgetHomePreview() {
       if (!c) return;
       if (c.binderId) {
         const b = await repo.getBinder(c.binderId);
-        setBinderName(b?.name ?? t('cardDetail.uncategorized'));
+        setBinderName(b?.name ?? null);
       } else {
-        setBinderName(t('cardDetail.uncategorized'));
+        setBinderName(null);
       }
     })();
-  }, [t]);
+  }, [locale]);
 
   if (!card) {
     return (
@@ -38,12 +39,14 @@ export function WidgetHomePreview() {
     );
   }
 
+  const displayBinderName = binderName ?? t('cardDetail.uncategorized');
+
   return (
     <View style={styles.wrap}>
       <Text style={styles.caption}>{t('present.widgetPreviewCaption')}</Text>
       <PresentationStage
         imageUri={card.imagePath}
-        binderName={binderName}
+        binderName={displayBinderName}
         sealedAtIso={card.sealedAt}
         dateFormatId={card.dateFormatId}
         profile="widget"

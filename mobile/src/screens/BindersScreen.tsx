@@ -29,7 +29,7 @@ type Props = {
 };
 
 export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +55,8 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
     }
     setRows(mapped);
     setLoading(false);
-  }, [t]);
+    // locale (not t): t is a stable translate ref; locale change must recompute labels
+  }, [locale, t]);
 
   useFocusEffect(reload);
 

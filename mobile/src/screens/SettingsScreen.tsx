@@ -1,8 +1,10 @@
+import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { TemplatePicker } from '../components/TemplatePicker';
-import type { DateFormatId, Settings, TemplateId } from '../domain/types';
+import { PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../config';
+import type { DateFormatId, LocalePreference, Settings, TemplateId } from '../domain/types';
 import { isTemplateId } from '../domain/templates';
 import { useI18n } from '../i18n/I18nProvider';
 import { WidgetHomePreview } from '../presentation/WidgetHomePreview';
@@ -13,8 +15,15 @@ type Props = {
   onBack: () => void;
 };
 
+const LANGS: { id: LocalePreference; labelKey: 'settings.languageSystem' | 'settings.languageKo' | 'settings.languageJa' | 'settings.languageEn' }[] = [
+  { id: 'system', labelKey: 'settings.languageSystem' },
+  { id: 'ko', labelKey: 'settings.languageKo' },
+  { id: 'ja', labelKey: 'settings.languageJa' },
+  { id: 'en', labelKey: 'settings.languageEn' },
+];
+
 export function SettingsScreen({ onBack }: Props) {
-  const { t } = useI18n();
+  const { t, preference, setPreference } = useI18n();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
@@ -33,6 +42,9 @@ export function SettingsScreen({ onBack }: Props) {
   const templateId: TemplateId = isTemplateId(settings.defaultTemplateId)
     ? settings.defaultTemplateId
     : 'polaroid';
+
+  const version =
+    Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
 
   const widgetStatus = settings.widgetCardId
     ? t('settings.widgetCard', { id: settings.widgetCardId.slice(0, 10) })
@@ -74,6 +86,21 @@ export function SettingsScreen({ onBack }: Props) {
       ))}
 
       <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.language')}
+      </Text>
+      {LANGS.map((lang) => (
+        <Pressable
+          key={lang.id}
+          onPress={() => void setPreference(lang.id)}
+          style={[styles.row, preference === lang.id && styles.rowActive]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: preference === lang.id }}
+        >
+          <Text style={styles.rowText}>{t(lang.labelKey)}</Text>
+        </Pressable>
+      ))}
+
+      <Text style={[styles.section, { marginTop: space.lg }]}>
         {t('settings.widgetSection')}
       </Text>
       <Text style={styles.sectionHint}>{t('settings.widgetHint')}</Text>
@@ -95,6 +122,29 @@ export function SettingsScreen({ onBack }: Props) {
       <WidgetHomePreview
         key={`${settings.widgetBinderId ?? ''}-${settings.widgetCardId ?? ''}`}
       />
+
+      <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.about')}
+      </Text>
+      <View style={styles.row}>
+        <Text style={styles.rowText}>
+          {t('settings.version', { version })}
+        </Text>
+      </View>
+      <Pressable
+        onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+        style={styles.row}
+        accessibilityRole="link"
+      >
+        <Text style={styles.rowText}>{t('settings.privacy')}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+        style={styles.row}
+        accessibilityRole="link"
+      >
+        <Text style={styles.rowText}>{t('settings.contact')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }

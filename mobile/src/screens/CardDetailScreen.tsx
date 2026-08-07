@@ -27,7 +27,7 @@ type Props = {
 };
 
 export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [card, setCard] = useState<Card | null>(null);
   const [binderName, setBinderName] = useState('');
   const [binders, setBinders] = useState<Binder[]>([]);
@@ -44,7 +44,8 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
       setBinderName(t('cardDetail.uncategorized'));
     }
     setBinders(await repo.listBinders());
-  }, [cardId, t]);
+    // locale (not t): t is a stable translate ref; locale change must recompute labels
+  }, [cardId, locale, t]);
 
   useFocusEffect(reload);
 
