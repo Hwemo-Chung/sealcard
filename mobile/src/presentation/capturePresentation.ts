@@ -2,8 +2,12 @@ import { captureRef } from 'react-native-view-shot';
 import type { RefObject } from 'react';
 import type { View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+/**
+ * SDK 57 default entry is the Next API (`ExpoMediaLibraryNext`) — no createAssetAsync
+ * and missing in Expo Go. Legacy uses `ExpoMediaLibrary` + createAssetAsync/album APIs.
+ */
+import * as MediaLibrary from 'expo-media-library/legacy';
 import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
 import { Alert, Platform } from 'react-native';
 
 import type { PresentationProfile } from '../domain/types';
@@ -48,13 +52,21 @@ export async function sharePresentationImage(tempUri: string): Promise<void> {
  * 3) else tell user to set manually
  */
 export async function setAsWallpaperFlow(tempUri: string): Promise<void> {
-  const perm = await MediaLibrary.requestPermissionsAsync();
+  // writeOnly: save to gallery only; avoid broad photo-library read prompts
+  const perm = await MediaLibrary.requestPermissionsAsync(true);
   if (!perm.granted) {
     Alert.alert(t('present.needPhotosTitle'), t('present.needPhotosBody'));
     return;
   }
 
-  const asset = await MediaLibrary.createAssetAsync(tempUri);
+  let asset: MediaLibrary.Asset;
+  try {
+    asset = await MediaLibrary.createAssetAsync(tempUri);
+  } catch {
+    Alert.alert(t('present.saveFailTitle'), t('present.saveFailBody'));
+    return;
+  }
+
   try {
     const album = await MediaLibrary.getAlbumAsync('Sealcard');
     if (album) {
@@ -63,7 +75,7 @@ export async function setAsWallpaperFlow(tempUri: string): Promise<void> {
       await MediaLibrary.createAlbumAsync('Sealcard', asset, false);
     }
   } catch {
-    // album optional
+    // album optional — asset already in library
   }
 
   if (Platform.OS === 'android') {
