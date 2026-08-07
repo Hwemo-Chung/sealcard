@@ -4,7 +4,13 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 
 import { TemplatePicker } from '../components/TemplatePicker';
 import { PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../config';
-import type { DateFormatId, LocalePreference, Settings, TemplateId } from '../domain/types';
+import type {
+  ActionNavPosition,
+  DateFormatId,
+  LocalePreference,
+  Settings,
+  TemplateId,
+} from '../domain/types';
 import { isTemplateId } from '../domain/templates';
 import { useI18n } from '../i18n/I18nProvider';
 import { WidgetHomePreview } from '../presentation/WidgetHomePreview';
@@ -82,6 +88,72 @@ export function SettingsScreen({ onBack }: Props) {
           style={[styles.row, settings.dateFormatId === f.id && styles.rowActive]}
         >
           <Text style={styles.rowText}>{f.label}</Text>
+        </Pressable>
+      ))}
+
+      <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.stampSection')}
+      </Text>
+      <Text style={styles.sectionHint}>{t('settings.stampHint')}</Text>
+      <Pressable
+        onPress={() => void patch({ showDate: !settings.showDate })}
+        style={[styles.row, settings.showDate !== false && styles.rowActive]}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: settings.showDate !== false }}
+      >
+        <Text style={styles.rowText}>{t('settings.showDate')}</Text>
+        <Text style={styles.rowSide}>
+          {settings.showDate !== false ? t('settings.on') : t('settings.off')}
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={() => void patch({ showLocation: !settings.showLocation })}
+        style={[styles.row, !!settings.showLocation && styles.rowActive]}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: !!settings.showLocation }}
+      >
+        <Text style={styles.rowText}>{t('settings.showLocation')}</Text>
+        <Text style={styles.rowSide}>
+          {settings.showLocation ? t('settings.on') : t('settings.off')}
+        </Text>
+      </Pressable>
+      <Text style={styles.sectionHint}>{t('settings.showLocationHint')}</Text>
+      <Pressable
+        onPress={() => void patch({ showBinderName: !settings.showBinderName })}
+        style={[styles.row, !!settings.showBinderName && styles.rowActive]}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: !!settings.showBinderName }}
+      >
+        <Text style={styles.rowText}>{t('settings.showBinderName')}</Text>
+        <Text style={styles.rowSide}>
+          {settings.showBinderName ? t('settings.on') : t('settings.off')}
+        </Text>
+      </Pressable>
+      <Text style={styles.sectionHint}>{t('settings.showBinderNameHint')}</Text>
+
+      <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.actionNavSection')}
+      </Text>
+      <Text style={styles.sectionHint}>{t('settings.actionNavHint')}</Text>
+      {(
+        [
+          { id: 'bottom' as ActionNavPosition, labelKey: 'settings.actionNavBottom' as const },
+          { id: 'top' as ActionNavPosition, labelKey: 'settings.actionNavTop' as const },
+        ] as const
+      ).map((opt) => (
+        <Pressable
+          key={opt.id}
+          onPress={() => void patch({ actionNavPosition: opt.id })}
+          style={[
+            styles.row,
+            (settings.actionNavPosition ?? 'bottom') === opt.id && styles.rowActive,
+          ]}
+          accessibilityRole="button"
+          accessibilityState={{
+            selected: (settings.actionNavPosition ?? 'bottom') === opt.id,
+          }}
+        >
+          <Text style={styles.rowText}>{t(opt.labelKey)}</Text>
         </Pressable>
       ))}
 
@@ -170,7 +242,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: space.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
   },
   rowActive: { borderColor: colors.accent },
-  rowText: { color: colors.text, fontSize: 16 },
+  rowText: { color: colors.text, fontSize: 16, flex: 1 },
+  rowSide: { color: colors.textMuted, fontSize: 14, fontWeight: '600' },
 });

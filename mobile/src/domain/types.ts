@@ -4,11 +4,7 @@ export type TemplateId =
   | 'polaroid'
   | 'polaroid_cream'
   | 'polaroid_black'
-  | 'glass'
-  | 'glass_aurora'
   | 'frame_dark'
-  | 'frame_gold'
-  | 'frame_wood'
   | 'minimal'
   | 'matte_gallery'
   | 'film_strip'
@@ -42,11 +38,22 @@ export interface Card {
 /** User locale preference; system follows device (ko*, ja*, else en). */
 export type LocalePreference = 'system' | 'ko' | 'ja' | 'en';
 
+/** Card detail floating action pill dock */
+export type ActionNavPosition = 'top' | 'bottom';
+
 export interface Settings {
   defaultTemplateId: TemplateId;
   dateFormatId: DateFormatId;
   /** UI language; default system */
   locale: LocalePreference;
+  /** Stamp date on sealed card chrome (default true) */
+  showDate: boolean;
+  /** Stamp place name from device GPS (default false; on-device only) */
+  showLocation: boolean;
+  /** Stamp binder title on sealed card chrome (default false) */
+  showBinderName: boolean;
+  /** Card detail action pill: above gallery or below meta */
+  actionNavPosition: ActionNavPosition;
   /** P3 home widget pointer — null = unset */
   widgetBinderId?: BinderId | null;
   /** null = latest card in widgetBinderId */
@@ -64,6 +71,10 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultTemplateId: 'polaroid',
   dateFormatId: 'dot',
   locale: 'system',
+  showDate: true,
+  showLocation: false,
+  showBinderName: false,
+  actionNavPosition: 'bottom',
   widgetBinderId: null,
   widgetCardId: null,
 };

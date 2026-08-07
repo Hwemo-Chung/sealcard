@@ -1,10 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Image,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useFocusEffect } from '../hooks/useFocusEffect';
@@ -32,6 +34,9 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
   const { t, locale } = useI18n();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [createBusy, setCreateBusy] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -55,33 +60,107 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
     }
     setRows(mapped);
     setLoading(false);
-    // locale (not t): t is a stable translate ref; locale change must recompute labels
   }, [locale, t]);
 
   useFocusEffect(reload);
+
+  const createBinder = async () => {
+    if (createBusy) return;
+    setCreateBusy(true);
+    try {
+      const name = newName.trim() || t('pickBinder.defaultName');
+      const b = await repo.createBinder(name);
+      setNewName('');
+      setCreating(false);
+      await reload();
+      onOpenBinder(b.id);
+    } catch {
+      Alert.alert(t('binders.createFailTitle'), t('binders.createFailBody'));
+    } finally {
+      setCreateBusy(false);
+    }
+  };
+
+  const createForm = creating ? (
+    <View style={styles.createBox}>
+      <TextInput
+        value={newName}
+        onChangeText={setNewName}
+        placeholder={t('pickBinder.placeholder')}
+        placeholderTextColor={colors.textMuted}
+        style={styles.input}
+        autoFocus
+        returnKeyType="done"
+        onSubmitEditing={() => void createBinder()}
+      />
+      <View style={styles.createActions}>
+        <PrimaryButton
+          label={t('common.cancel')}
+          onPress={() => {
+            setCreating(false);
+            setNewName('');
+          }}
+          variant="ghost"
+          size="sm"
+          style={styles.createBtn}
+        />
+        <PrimaryButton
+          label={t('binders.create')}
+          onPress={() => void createBinder()}
+          loading={createBusy}
+          size="sm"
+          style={styles.createBtn}
+        />
+      </View>
+    </View>
+  ) : null;
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('binders.title')}</Text>
-        <Pressable
-          onPress={onSettings}
-          accessibilityRole="button"
-          accessibilityLabel={t('binders.settingsA11y')}
-        >
-          <Text style={styles.link}>{t('binders.settings')}</Text>
-        </Pressable>
+        <View style={styles.headerRight}>
+          {!creating && (
+            <Pressable
+              onPress={() => setCreating(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('binders.createA11y')}
+              hitSlop={8}
+            >
+              <Text style={styles.link}>{t('binders.create')}</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={onSettings}
+            accessibilityRole="button"
+            accessibilityLabel={t('binders.settingsA11y')}
+            hitSlop={8}
+          >
+            <Text style={styles.link}>{t('binders.settings')}</Text>
+          </Pressable>
+        </View>
       </View>
       <Text style={styles.hint}>{t('binders.hint')}</Text>
+
+      {createForm}
 
       {rows.length === 0 && !loading ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>{t('binders.emptyTitle')}</Text>
           <Text style={styles.emptyBody}>{t('binders.emptyBody')}</Text>
+          {!creating && (
+            <PrimaryButton
+              label={t('binders.create')}
+              onPress={() => setCreating(true)}
+              style={{ marginTop: space.lg }}
+              accessibilityLabel={t('binders.createA11y')}
+            />
+          )}
           <PrimaryButton
             label={t('binders.seal')}
             onPress={onSeal}
-            style={{ marginTop: space.lg }}
+            variant="ghost"
+            style={{ marginTop: space.sm }}
           />
         </View>
       ) : (
@@ -139,6 +218,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+  },
   title: { color: colors.text, fontSize: 28, fontWeight: '700' },
   link: { color: colors.textMuted, fontSize: 16 },
   hint: {
@@ -147,6 +231,28 @@ const styles = StyleSheet.create({
     marginTop: space.xs,
     marginBottom: space.md,
   },
+  createBox: {
+    marginHorizontal: space.md,
+    marginBottom: space.md,
+    padding: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: space.sm,
+  },
+  input: {
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    color: colors.text,
+    paddingHorizontal: space.md,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  createActions: { flexDirection: 'row', gap: space.sm },
+  createBtn: { flex: 1 },
   list: { padding: space.md, paddingBottom: 100 },
   row: {
     flexDirection: 'row',

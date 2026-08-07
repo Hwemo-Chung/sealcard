@@ -1,11 +1,11 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Dimensions,
   Pressable,
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,19 +13,29 @@ import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TemplatePicker } from '../components/TemplatePicker';
 import { formatSealDate, nowIso } from '../domain/dates';
+import { resolvePlaceLabel } from '../domain/locationLabel';
 import { cardLayout } from '../domain/templates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
 import { colors, space } from '../theme';
 
+/** Fixed edge inset — no % wasted margin around live card preview. */
+const EDGE = 5;
+
 type Props = {
   defaultTemplateId: TemplateId;
   dateFormatId: DateFormatId;
+  showDate: boolean;
+  showLocation: boolean;
+  showBinderName: boolean;
   onCaptured: (payload: {
     photoUri: string;
     templateId: TemplateId;
     dateFormatId: DateFormatId;
     sealedAtIso: string;
+    showDate: boolean;
+    locationLabel: string | null;
+    showBinderName: boolean;
   }) => void;
   onCancel: () => void;
 };
@@ -37,6 +47,9 @@ type Props = {
 export function SealCameraScreen({
   defaultTemplateId,
   dateFormatId,
+  showDate: showDateProp,
+  showLocation: showLocationProp,
+  showBinderName: showBinderNameProp,
   onCaptured,
   onCancel,
 }: Props) {
@@ -49,26 +62,40 @@ export function SealCameraScreen({
   const [busy, setBusy] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  /** Session overrides of settings defaults */
+  const [showDate, setShowDate] = useState(showDateProp);
+  const [showLocation, setShowLocation] = useState(showLocationProp);
+  const [showBinderName, setShowBinderName] = useState(showBinderNameProp);
+  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const [locationBusy, setLocationBusy] = useState(false);
+  /** Stage layout — card fills this rect with EDGE padding only. */
+  const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
   const sealedAtIso = nowIso();
 
-  const win = Dimensions.get('window');
-  const topBarH = insets.top + 56;
-  // Reserve expanded picker height so card/camera size stays fixed (no remount churn).
-  const bottomReserve = Math.max(insets.bottom, 8) + 280;
+  const onStageLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setStageSize((prev) =>
+      prev.w === Math.floor(width) && prev.h === Math.floor(height)
+        ? prev
+        : { w: Math.floor(width), h: Math.floor(height) },
+    );
+  };
 
   const cardWidth = useMemo(() => {
-    const maxW = win.width * 0.86;
-    const maxH = Math.max(160, win.height - topBarH - bottomReserve - 24);
-    const { t: spec } = cardLayout(templateId, maxW);
-    const aspect = spec.aspect || 0.8;
+    const maxW = Math.max(1, stageSize.w - EDGE * 2);
+    const maxH = Math.max(1, stageSize.h - EDGE * 2);
+    if (stageSize.w <= 0 || stageSize.h <= 0) return maxW;
+    // Fit using real cardLayout height (minimal has square photo + date band).
     let w = maxW;
-    let h = w / aspect;
+    let h = cardLayout(templateId, w).height;
     if (h > maxH) {
-      h = maxH;
-      w = h * aspect;
+      w = Math.max(1, Math.floor(w * (maxH / h)));
+      h = cardLayout(templateId, w).height;
+      // one more tighten if float residual
+      if (h > maxH) w = Math.max(1, Math.floor(w * (maxH / h)));
     }
-    return Math.floor(w);
-  }, [win.width, win.height, topBarH, bottomReserve, templateId]);
+    return Math.max(1, Math.floor(w));
+  }, [stageSize.w, stageSize.h, templateId]);
 
   const { photoW, photoH } = useMemo(
     () => cardLayout(templateId, cardWidth),
@@ -81,6 +108,24 @@ export function SealCameraScreen({
     const unlock = setTimeout(() => setCameraReady(true), 1800);
     return () => clearTimeout(unlock);
   }, [facing, templateId]);
+
+  useEffect(() => {
+    if (!showLocation) {
+      setLocationLabel(null);
+      setLocationBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setLocationBusy(true);
+    void resolvePlaceLabel().then((label) => {
+      if (cancelled) return;
+      setLocationLabel(label);
+      setLocationBusy(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [showLocation]);
 
   const templateLabel = t(`template.${templateId}_label`);
 
@@ -116,13 +161,14 @@ export function SealCameraScreen({
         skipProcessing: false,
       });
       if (!photo?.uri) return;
-      // Full sensor image; SealPreview CardFace uses resizeMode="cover" into the
-      // same photoW×photoH aspect as this live CameraView — center crop matches.
       onCaptured({
         photoUri: photo.uri,
         templateId,
         dateFormatId,
         sealedAtIso: nowIso(),
+        showDate,
+        locationLabel: showLocation ? locationLabel : null,
+        showBinderName,
       });
     } finally {
       setBusy(false);
@@ -134,6 +180,19 @@ export function SealCameraScreen({
     setPickerOpen(false);
   };
 
+  const binderPreview = showBinderName ? t('sealCamera.binderPlaceholder') : null;
+  const stampLine = [
+    showDate ? formatSealDate(sealedAtIso, dateFormatId) : null,
+    showLocation
+      ? locationBusy
+        ? t('sealCamera.locationLoading')
+        : locationLabel ?? t('sealCamera.locationUnavailable')
+      : null,
+    binderPreview,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <View style={styles.root}>
       <View style={[styles.topBar, { paddingTop: insets.top + space.sm }]}>
@@ -142,7 +201,13 @@ export function SealCameraScreen({
         </Pressable>
         <View style={styles.bannerCol}>
           <Text style={styles.banner}>{t('sealCamera.banner')}</Text>
-          <Text style={styles.datePreview}>{formatSealDate(sealedAtIso, dateFormatId)}</Text>
+          {stampLine ? (
+            <Text style={styles.datePreview} numberOfLines={1}>
+              {stampLine}
+            </Text>
+          ) : (
+            <Text style={styles.datePreviewMuted}>{t('sealCamera.stampOff')}</Text>
+          )}
         </View>
         <Pressable
           onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
@@ -153,22 +218,27 @@ export function SealCameraScreen({
         </Pressable>
       </View>
 
-      <View style={styles.stage}>
-        <CardFace
-          templateId={templateId}
-          dateFormatId={dateFormatId}
-          sealedAtIso={sealedAtIso}
-          width={cardWidth}
-          photoSlot={
-            <CameraView
-              key={facing}
-              ref={cameraRef}
-              style={{ width: photoW, height: photoH }}
-              facing={facing}
-              onCameraReady={() => setCameraReady(true)}
-            />
-          }
-        />
+      <View style={styles.stage} onLayout={onStageLayout}>
+        {stageSize.w > 0 && stageSize.h > 0 ? (
+          <CardFace
+            templateId={templateId}
+            dateFormatId={dateFormatId}
+            sealedAtIso={sealedAtIso}
+            width={cardWidth}
+            showDate={showDate}
+            locationLabel={showLocation ? locationLabel : null}
+            binderLabel={binderPreview}
+            photoSlot={
+              <CameraView
+                key={facing}
+                ref={cameraRef}
+                style={{ width: photoW, height: photoH }}
+                facing={facing}
+                onCameraReady={() => setCameraReady(true)}
+              />
+            }
+          />
+        ) : null}
       </View>
 
       <View
@@ -177,6 +247,47 @@ export function SealCameraScreen({
           { paddingBottom: Math.max(insets.bottom, space.sm) + 4 },
         ]}
       >
+        {/* Session stamp toggles (defaults from settings) */}
+        <View style={styles.optRow}>
+          <Pressable
+            onPress={() => setShowDate((v) => !v)}
+            style={[styles.optChip, showDate && styles.optChipOn]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: showDate }}
+            accessibilityLabel={t('sealCamera.toggleDateA11y')}
+          >
+            <Text style={[styles.optChipText, showDate && styles.optChipTextOn]}>
+              {t('sealCamera.toggleDate')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setShowLocation((v) => !v)}
+            style={[styles.optChip, showLocation && styles.optChipOn]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: showLocation }}
+            accessibilityLabel={t('sealCamera.toggleLocationA11y')}
+          >
+            <Text
+              style={[styles.optChipText, showLocation && styles.optChipTextOn]}
+            >
+              {t('sealCamera.toggleLocation')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setShowBinderName((v) => !v)}
+            style={[styles.optChip, showBinderName && styles.optChipOn]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: showBinderName }}
+            accessibilityLabel={t('sealCamera.toggleBinderA11y')}
+          >
+            <Text
+              style={[styles.optChipText, showBinderName && styles.optChipTextOn]}
+            >
+              {t('sealCamera.toggleBinder')}
+            </Text>
+          </Pressable>
+        </View>
+
         {pickerOpen ? (
           <>
             <Pressable
@@ -243,16 +354,22 @@ const styles = StyleSheet.create({
   banner: { color: '#fff', fontSize: 12, opacity: 0.9, textAlign: 'center' },
   datePreview: {
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
+    paddingHorizontal: 4,
+  },
+  datePreviewMuted: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 11,
+    marginTop: 2,
   },
   stage: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    padding: EDGE,
   },
   bottomBlock: {
     backgroundColor: 'rgba(0,0,0,0.72)',
@@ -261,6 +378,34 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     borderTopWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+  },
+  optRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: space.md,
+    paddingBottom: 8,
+  },
+  optChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  optChipOn: {
+    borderColor: 'rgba(255,255,255,0.75)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  optChipText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  optChipTextOn: {
+    color: '#fff',
   },
   handle: {
     alignSelf: 'center',

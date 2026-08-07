@@ -51,6 +51,9 @@ export default function App() {
               <SealCameraScreen
                 defaultTemplateId={settings.defaultTemplateId}
                 dateFormatId={settings.dateFormatId}
+                showDate={settings.showDate !== false}
+                showLocation={!!settings.showLocation}
+                showBinderName={!!settings.showBinderName}
                 onCancel={goBinders}
                 onCaptured={(p) =>
                   setScreen({
@@ -59,6 +62,9 @@ export default function App() {
                     templateId: p.templateId,
                     dateFormatId: p.dateFormatId,
                     sealedAtIso: p.sealedAtIso,
+                    showDate: p.showDate,
+                    locationLabel: p.locationLabel,
+                    showBinderName: p.showBinderName,
                   })
                 }
               />
@@ -89,6 +95,9 @@ export default function App() {
                 <CardDetailScreen
                   cardId={screen.cardId}
                   binderId={screen.fromBinderId}
+                  actionNavPosition={
+                    settings.actionNavPosition === 'top' ? 'top' : 'bottom'
+                  }
                   onBack={() =>
                     setScreen({
                       name: 'binderDetail',
@@ -109,6 +118,9 @@ export default function App() {
                   templateId={screen.templateId}
                   dateFormatId={screen.dateFormatId}
                   sealedAtIso={screen.sealedAtIso}
+                  showDate={screen.showDate}
+                  locationLabel={screen.locationLabel}
+                  showBinderName={screen.showBinderName}
                   onRetake={() => setScreen({ name: 'sealCamera' })}
                   onConfirmSeal={(p) =>
                     setScreen({
@@ -120,6 +132,9 @@ export default function App() {
                       compositeUri: p.compositeUri,
                       width: p.width,
                       height: p.height,
+                      showDate: screen.showDate,
+                      locationLabel: screen.locationLabel,
+                      showBinderName: screen.showBinderName,
                     })
                   }
                 />
@@ -133,6 +148,9 @@ export default function App() {
                   compositeUri={screen.compositeUri}
                   width={screen.width}
                   height={screen.height}
+                  showDate={screen.showDate}
+                  locationLabel={screen.locationLabel}
+                  showBinderName={screen.showBinderName}
                   onCancel={goBinders}
                   onDone={(_cardId, binderId) => {
                     void repo.getBinder(binderId).then((b) => {

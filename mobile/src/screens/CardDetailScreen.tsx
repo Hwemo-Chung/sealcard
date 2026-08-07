@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -13,12 +12,14 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { PrimaryButton } from '../components/PrimaryButton';
-import { formatSealDate } from '../domain/dates';
-import type { Binder, Card } from '../domain/types';
+import { CardActionNav } from '../components/CardActionNav';
+import type { ActionNavPosition, Binder, Card } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
 import { useI18n } from '../i18n/I18nProvider';
-import { PresentActions } from '../presentation/PresentActions';
+import {
+  PresentActions,
+  type PresentActionsHandle,
+} from '../presentation/PresentActions';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -26,6 +27,8 @@ type Props = {
   cardId: string;
   /** Binder context for sibling swipe (null = uncategorized). */
   binderId?: string | null;
+  /** Floating action pill dock — from settings. */
+  actionNavPosition?: ActionNavPosition;
   onBack: () => void;
   onDestroyed: () => void;
 };
@@ -33,6 +36,7 @@ type Props = {
 export function CardDetailScreen({
   cardId: initialCardId,
   binderId: binderIdProp,
+  actionNavPosition = 'bottom',
   onBack,
   onDestroyed,
 }: Props) {
@@ -41,10 +45,12 @@ export function CardDetailScreen({
   const [index, setIndex] = useState(0);
   const [binderName, setBinderName] = useState('');
   const [binders, setBinders] = useState<Binder[]>([]);
-  const [showMove, setShowMove] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
   const listRef = useRef<FlatList<Card>>(null);
+  const presentRef = useRef<PresentActionsHandle>(null);
   const pageW = Dimensions.get('window').width;
   const imgW = Math.min(pageW - space.md * 2, 340);
+  const navTop = actionNavPosition === 'top';
 
   const reload = useCallback(async () => {
     const seed = await repo.getCard(initialCardId);
@@ -55,7 +61,6 @@ export function CardDetailScreen({
     const binderId =
       binderIdProp !== undefined ? binderIdProp : seed.binderId;
     const list = await repo.listCards(binderId);
-    // Ensure current card is in list (edge: race)
     const ids = new Set(list.map((c) => c.id));
     const full = ids.has(seed.id) ? list : [seed, ...list];
     setCards(full);
@@ -77,10 +82,6 @@ export function CardDetailScreen({
   }, [initialCardId, binderIdProp, locale, t]);
 
   useFocusEffect(reload);
-
-  useEffect(() => {
-    setShowMove(false);
-  }, [index]);
 
   const card = cards[index] ?? null;
 
@@ -129,11 +130,34 @@ export function CardDetailScreen({
   const moveTo = (binderId: string | null) => {
     void (async () => {
       await repo.moveCard(card.id, binderId);
-      setShowMove(false);
-      // Leave to binder list of destination is heavy; refresh siblings in current binder
       await reload();
     })();
   };
+
+  const moveOptions = [
+    ...binders.map((b) => ({ id: b.id as string | null, label: b.name })),
+    { id: null as string | null, label: t('cardDetail.uncategorized') },
+  ];
+
+  const actionNav = (
+    <CardActionNav
+      labels={{
+        share: t('cardDetail.navShare'),
+        move: t('cardDetail.navMove'),
+        destroy: t('cardDetail.navDestroy'),
+      }}
+      a11y={{
+        share: t('present.shareA11y'),
+        move: t('cardDetail.moveA11y'),
+        destroy: t('cardDetail.destroyA11y'),
+      }}
+      moveOptions={moveOptions}
+      shareBusy={shareBusy}
+      onShare={() => presentRef.current?.share()}
+      onDestroy={destroy}
+      onMove={moveTo}
+    />
+  );
 
   return (
     <View style={styles.root}>
@@ -149,6 +173,8 @@ export function CardDetailScreen({
           <View />
         )}
       </View>
+
+      {navTop ? <View style={styles.navTopSlot}>{actionNav}</View> : null}
 
       <FlatList
         ref={listRef}
@@ -174,7 +200,7 @@ export function CardDetailScreen({
         renderItem={({ item }) => {
           const h = Math.min(
             (imgW * (item.height || 1)) / (item.width || 1),
-            Dimensions.get('window').height * 0.42,
+            Dimensions.get('window').height * 0.48,
           );
           return (
             <View style={[styles.page, { width: pageW }]}>
@@ -186,55 +212,21 @@ export function CardDetailScreen({
             </View>
           );
         }}
+        style={styles.gallery}
       />
 
-      <ScrollView
-        style={styles.actionsScroll}
-        contentContainerStyle={styles.actionsContent}
-        bounces={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.date}>
-          {formatSealDate(card.sealedAt, card.dateFormatId)}
-        </Text>
-        <Text style={styles.meta}>
-          {binderName} · {t(`template.${card.templateId}_label`)}
-        </Text>
-        <Text style={styles.frozen}>{t('cardDetail.frozen')}</Text>
-
-        {/* 한 줄: 공유 | 파기 */}
-        <View style={styles.actionRow}>
-          <PresentActions card={card} binderName={binderName} compact style={styles.actionHalf} />
-          <PrimaryButton
-            label={t('cardDetail.destroy')}
-            onPress={destroy}
-            variant="danger"
-            size="sm"
-            style={styles.actionHalf}
-            accessibilityLabel={t('cardDetail.destroyA11y')}
-          />
-        </View>
-
-        <PrimaryButton
-          label={t('cardDetail.move')}
-          onPress={() => setShowMove((s) => !s)}
-          variant="ghost"
-          size="sm"
-          style={{ marginTop: 6 }}
+      {/* Date/binder/template already on sealed image — no duplicate meta above actions */}
+      <View style={styles.footer}>
+        <PresentActions
+          ref={presentRef}
+          card={card}
+          binderName={binderName}
+          hideButton
+          onBusyChange={setShareBusy}
         />
-        {showMove && (
-          <View style={styles.moveList}>
-            {binders.map((b) => (
-              <Pressable key={b.id} onPress={() => moveTo(b.id)} style={styles.moveRow}>
-                <Text style={styles.moveText}>{b.name}</Text>
-              </Pressable>
-            ))}
-            <Pressable onPress={() => moveTo(null)} style={styles.moveRow}>
-              <Text style={styles.moveText}>{t('cardDetail.uncategorized')}</Text>
-            </Pressable>
-          </View>
-        )}
-      </ScrollView>
+
+        {!navTop ? actionNav : null}
+      </View>
     </View>
   );
 }
@@ -250,22 +242,19 @@ const styles = StyleSheet.create({
   },
   link: { color: colors.textMuted, fontSize: 15 },
   counter: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  navTopSlot: {
+    paddingHorizontal: space.sm,
+  },
+  gallery: { flex: 1 },
   page: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: space.sm,
   },
-  actionsScroll: { flexGrow: 0, maxHeight: '42%' },
-  actionsContent: {
+  footer: {
     paddingHorizontal: space.md,
-    paddingBottom: space.lg,
+    paddingBottom: space.sm,
     paddingTop: 4,
-  },
-  date: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
   },
   meta: {
     color: colors.textMuted,
@@ -273,30 +262,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 13,
   },
-  frozen: {
-    color: colors.textMuted,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 8,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionHalf: {
-    flex: 1,
-    alignSelf: 'stretch',
-  },
-  moveList: { marginTop: 6, gap: 4 },
-  moveRow: {
-    paddingVertical: 10,
-    paddingHorizontal: space.md,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  moveText: { color: colors.text, fontSize: 13 },
 });

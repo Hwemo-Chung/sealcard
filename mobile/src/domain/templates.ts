@@ -3,7 +3,6 @@ import { t } from '../i18n';
 
 export type FrameStyle =
   | 'polaroid'
-  | 'glass'
   | 'matte'
   | 'ornate'
   | 'film'
@@ -12,17 +11,15 @@ export type FrameStyle =
   | 'postage'
   | 'soft';
 
-/** Picker category chips — keeps 15 frames scannable */
+/** Picker category chips */
 export type TemplateCategoryId =
   | 'instant'
-  | 'glass'
   | 'gallery'
   | 'film'
   | 'play';
 
 export const TEMPLATE_CATEGORY_IDS: TemplateCategoryId[] = [
   'instant',
-  'glass',
   'gallery',
   'film',
   'play',
@@ -72,11 +69,7 @@ export const FRAME_OVERLAYS: Partial<Record<TemplateId, number>> = {
   polaroid: require('../../assets/frames/polaroid.png'),
   polaroid_cream: require('../../assets/frames/polaroid_cream.png'),
   polaroid_black: require('../../assets/frames/polaroid_black.png'),
-  glass: require('../../assets/frames/glass.png'),
-  glass_aurora: require('../../assets/frames/glass_aurora.png'),
   frame_dark: require('../../assets/frames/frame_dark.png'),
-  frame_gold: require('../../assets/frames/frame_gold.png'),
-  frame_wood: require('../../assets/frames/frame_wood.png'),
   minimal: require('../../assets/frames/minimal.png'),
   matte_gallery: require('../../assets/frames/matte_gallery.png'),
   film_strip: require('../../assets/frames/film_strip.png'),
@@ -95,7 +88,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     style: 'polaroid',
     aspect: 0.8,
     photoInset: 0.055,
-    dateBand: 0.16,
+    dateBand: 0.18,
     background: '#FAF8F5',
     borderColor: '#EDE8E1',
     borderWidth: 1,
@@ -115,7 +108,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     style: 'polaroid',
     aspect: 0.78,
     photoInset: 0.06,
-    dateBand: 0.18,
+    dateBand: 0.19,
     background: '#F3EBD9',
     borderColor: '#E0D4BC',
     borderWidth: 1,
@@ -135,7 +128,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     style: 'polaroid',
     aspect: 0.8,
     photoInset: 0.05,
-    dateBand: 0.15,
+    dateBand: 0.17,
     background: '#141414',
     borderColor: '#2A2A2A',
     borderWidth: 1,
@@ -149,61 +142,13 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     chipFrom: '#1A1A1A',
     chipTo: '#333',
   },
-  glass: {
-    id: 'glass',
-    category: 'glass',
-    style: 'glass',
-    aspect: 0.82,
-    photoInset: 0.07,
-    dateBand: 0.13,
-    background: 'rgba(255,255,255,0.14)',
-    backgroundAlt: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,255,255,0.45)',
-    borderWidth: 1.5,
-    rimColor: 'rgba(255,255,255,0.12)',
-    rimWidth: 6,
-    cornerRadius: 18,
-    photoRadius: 12,
-    dateColor: 'rgba(255,255,255,0.92)',
-    dateAlign: 'center',
-    dateWeight: '600',
-    dateLetterSpacing: 0.8,
-    glassHighlight: true,
-    shadow: 0.35,
-    chipFrom: '#7EB8FF',
-    chipTo: '#C9A0FF',
-  },
-  glass_aurora: {
-    id: 'glass_aurora',
-    category: 'glass',
-    style: 'glass',
-    aspect: 0.8,
-    photoInset: 0.075,
-    dateBand: 0.12,
-    background: 'rgba(120,80,200,0.22)',
-    backgroundAlt: 'rgba(40,180,200,0.12)',
-    borderColor: 'rgba(220,200,255,0.55)',
-    borderWidth: 1.5,
-    rimColor: 'rgba(180,120,255,0.18)',
-    rimWidth: 8,
-    cornerRadius: 20,
-    photoRadius: 14,
-    dateColor: '#F4EEFF',
-    dateAlign: 'center',
-    dateWeight: '600',
-    dateLetterSpacing: 1,
-    glassHighlight: true,
-    shadow: 0.38,
-    chipFrom: '#A78BFA',
-    chipTo: '#22D3EE',
-  },
   frame_dark: {
     id: 'frame_dark',
     category: 'gallery',
     style: 'matte',
     aspect: 0.75,
     photoInset: 0.08,
-    dateBand: 0.11,
+    dateBand: 0.14,
     background: '#0D0D0D',
     backgroundAlt: '#1A1A1A',
     borderColor: '#2E2E2E',
@@ -218,60 +163,15 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     chipFrom: '#111',
     chipTo: '#444',
   },
-  frame_gold: {
-    id: 'frame_gold',
-    category: 'gallery',
-    style: 'ornate',
-    aspect: 0.72,
-    photoInset: 0.09,
-    dateBand: 0.12,
-    background: '#1C1812',
-    borderColor: '#C9A227',
-    borderWidth: 3,
-    rimColor: '#8B6914',
-    rimWidth: 2,
-    cornerRadius: 6,
-    photoRadius: 2,
-    dateColor: '#E8D5A3',
-    dateAlign: 'center',
-    dateWeight: '600',
-    dateLetterSpacing: 1.6,
-    accentColor: '#C9A227',
-    shadow: 0.4,
-    chipFrom: '#C9A227',
-    chipTo: '#5C4A1F',
-  },
-  frame_wood: {
-    id: 'frame_wood',
-    category: 'gallery',
-    style: 'ornate',
-    aspect: 0.74,
-    photoInset: 0.085,
-    dateBand: 0.12,
-    background: '#3E2A1A',
-    backgroundAlt: '#5C3D24',
-    borderColor: '#8B5E34',
-    borderWidth: 4,
-    rimColor: '#2A1A10',
-    rimWidth: 2,
-    cornerRadius: 4,
-    photoRadius: 1,
-    dateColor: '#F0E0C8',
-    dateAlign: 'center',
-    dateWeight: '500',
-    dateLetterSpacing: 0.8,
-    accentColor: '#A67C52',
-    shadow: 0.42,
-    chipFrom: '#8B5E34',
-    chipTo: '#3E2A1A',
-  },
   minimal: {
     id: 'minimal',
     category: 'gallery',
     style: 'matte',
-    aspect: 0.85,
-    photoInset: 0.028,
-    dateBand: 0.09,
+    /** 1:1 square photo; outer card taller for bottom type margin */
+    aspect: 1,
+    photoInset: 0.045,
+    /** Bottom band only — room for date/location without crowding */
+    dateBand: 0.18,
     background: '#FFFFFF',
     borderColor: '#E5E5E5',
     borderWidth: 1,
@@ -291,7 +191,7 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     style: 'matte',
     aspect: 0.7,
     photoInset: 0.12,
-    dateBand: 0.1,
+    dateBand: 0.13,
     background: '#F2F0EB',
     backgroundAlt: '#E8E4DC',
     borderColor: '#D4CFC4',
@@ -310,30 +210,31 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'film_strip',
     category: 'film',
     style: 'film',
-    aspect: 0.7,
-    photoInset: 0.11,
-    dateBand: 0.1,
-    background: '#0A0A0A',
-    borderColor: '#1F1F1F',
+    // Vertical 35mm strip: side sprocket rails, minimal top/bottom black
+    aspect: 0.72,
+    photoInset: 0.13, // side rails only (horizontal)
+    dateBand: 0.02, // almost none — date lives on rails
+    background: '#0B0B0B',
+    borderColor: '#1A1A1A',
     borderWidth: 0,
-    cornerRadius: 4,
+    cornerRadius: 2,
     photoRadius: 0,
-    dateColor: '#B8B8B8',
+    dateColor: '#D0D0D0',
     dateAlign: 'center',
     dateWeight: '600',
-    dateLetterSpacing: 2,
+    dateLetterSpacing: 2.4,
     deco: 'sprocket',
-    shadow: 0.35,
+    shadow: 0.4,
     chipFrom: '#111',
-    chipTo: '#555',
+    chipTo: '#444',
   },
   ticket: {
     id: 'ticket',
     category: 'film',
     style: 'ticket',
     aspect: 0.62,
-    photoInset: 0.06,
-    dateBand: 0.14,
+    photoInset: 0.065,
+    dateBand: 0.18,
     background: '#FFF9F0',
     borderColor: '#E8D9C4',
     borderWidth: 1,
@@ -353,15 +254,16 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     category: 'play',
     style: 'neon',
     aspect: 0.8,
-    photoInset: 0.06,
-    dateBand: 0.11,
+    photoInset: 0.065,
+    dateBand: 0.14,
     background: '#050508',
+    /** Outer cyan + inner pink must share equal stroke + concentric radii */
     borderColor: '#00F0FF',
     borderWidth: 2,
     rimColor: '#FF2BD6',
-    rimWidth: 1,
-    cornerRadius: 14,
-    photoRadius: 8,
+    rimWidth: 2,
+    cornerRadius: 16,
+    photoRadius: 10,
     dateColor: '#00F0FF',
     dateAlign: 'center',
     dateWeight: '700',
@@ -374,30 +276,31 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
     id: 'postage',
     category: 'film',
     style: 'postage',
-    aspect: 0.78,
-    photoInset: 0.1,
+    // Slightly taller paper margin like commemorative stamps
+    aspect: 0.82,
+    photoInset: 0.12,
     dateBand: 0.12,
-    background: '#F7F2E8',
-    borderColor: '#C4B8A4',
-    borderWidth: 2,
-    cornerRadius: 2,
-    photoRadius: 2,
-    dateColor: '#4A4035',
+    background: '#FFFEF9',
+    borderColor: '#E8E2D4',
+    borderWidth: 0,
+    cornerRadius: 0,
+    photoRadius: 0,
+    dateColor: '#5C5346',
     dateAlign: 'center',
     dateWeight: '600',
-    dateLetterSpacing: 0.5,
+    dateLetterSpacing: 0.8,
     deco: 'perforation',
-    shadow: 0.2,
-    chipFrom: '#F7F2E8',
-    chipTo: '#A89880',
+    shadow: 0.22,
+    chipFrom: '#FFFEF9',
+    chipTo: '#D4C8B0',
   },
   soft_round: {
     id: 'soft_round',
     category: 'play',
     style: 'soft',
     aspect: 0.84,
-    photoInset: 0.05,
-    dateBand: 0.12,
+    photoInset: 0.055,
+    dateBand: 0.14,
     background: '#FFF5F7',
     borderColor: '#FFD6E0',
     borderWidth: 2,
@@ -417,11 +320,7 @@ export const TEMPLATE_LIST: TemplateSpec[] = [
   TEMPLATES.polaroid,
   TEMPLATES.polaroid_cream,
   TEMPLATES.polaroid_black,
-  TEMPLATES.glass,
-  TEMPLATES.glass_aurora,
   TEMPLATES.frame_dark,
-  TEMPLATES.frame_gold,
-  TEMPLATES.frame_wood,
   TEMPLATES.minimal,
   TEMPLATES.matte_gallery,
   TEMPLATES.film_strip,
@@ -447,12 +346,34 @@ export function categoryLabel(id: TemplateCategoryId | 'all'): string {
 /** Layout numbers shared by CardFace and live camera (WYSIWYG). */
 export function cardLayout(templateId: string | undefined | null, width: number) {
   const t = resolveTemplate(templateId);
-  const height = width / t.aspect;
   const inset = width * t.photoInset;
+
+  // 1:1 square photo; extra bottom band for type (not stolen from photo).
+  if (t.id === 'minimal') {
+    const photoW = Math.max(1, width - inset * 2);
+    const photoH = photoW;
+    // Generous bottom margin for date/location lines
+    const dateBandH = Math.max(1, width * t.dateBand);
+    const bottomPad = inset * 0.85;
+    const height = inset + photoH + dateBandH + bottomPad;
+    return { t, height, inset, dateBandH, photoW, photoH, edgeV: inset };
+  }
+
+  // Film: side rails only — top/bottom black is hairline (real 35mm), not big mats.
+  if (t.style === 'film') {
+    const height = width / t.aspect;
+    const edgeV = Math.max(2, Math.round(width * 0.012)); // ~1.2% — minimal
+    const dateBandH = Math.max(0, height * t.dateBand);
+    const photoW = Math.max(1, width - inset * 2);
+    const photoH = Math.max(1, height - edgeV * 2 - dateBandH);
+    return { t, height, inset, dateBandH, photoW, photoH, edgeV };
+  }
+
+  const height = width / t.aspect;
   const dateBandH = height * t.dateBand;
   const photoH = Math.max(1, height - inset * 2 - dateBandH);
   const photoW = Math.max(1, width - inset * 2);
-  return { t, height, inset, dateBandH, photoW, photoH };
+  return { t, height, inset, dateBandH, photoW, photoH, edgeV: inset };
 }
 
 export function resolveTemplate(id: string | undefined | null): TemplateSpec {

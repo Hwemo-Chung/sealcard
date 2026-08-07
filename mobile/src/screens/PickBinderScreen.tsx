@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -8,7 +8,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 
+import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { Binder, DateFormatId, TemplateId } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
@@ -23,17 +25,24 @@ type Props = {
   compositeUri: string;
   width: number;
   height: number;
+  showDate: boolean;
+  locationLabel: string | null;
+  showBinderName: boolean;
   onDone: (cardId: string, binderId: string) => void;
   onCancel: () => void;
 };
 
 export function PickBinderScreen({
+  photoUri,
   templateId,
   dateFormatId,
   sealedAtIso,
   compositeUri,
   width,
   height,
+  showDate,
+  locationLabel,
+  showBinderName,
   onDone,
   onCancel,
 }: Props) {
@@ -42,6 +51,9 @@ export function PickBinderScreen({
   const [selected, setSelected] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
+  const cardRef = useRef<View>(null);
+  const selectedName =
+    binders.find((b) => b.id === selected)?.name ?? null;
 
   useEffect(() => {
     void (async () => {
@@ -65,13 +77,31 @@ export function PickBinderScreen({
     }
     setBusy(true);
     try {
+      let finalUri = compositeUri;
+      let finalW = width;
+      let finalH = height;
+
+      // Binder title is only known here — re-capture chrome with real name.
+      if (showBinderName && cardRef.current) {
+        // Let layout paint selected binder label
+        await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+        await new Promise((r) => setTimeout(r, 50));
+        finalUri = await captureRef(cardRef, {
+          format: 'jpg',
+          quality: 0.92,
+          result: 'tmpfile',
+        });
+        finalW = Math.round(width);
+        finalH = Math.round(height);
+      }
+
       const card = await repo.sealCard({
         binderId: selected,
         templateId,
         dateFormatId,
-        compositeUri,
-        width,
-        height,
+        compositeUri: finalUri,
+        width: finalW,
+        height: finalH,
         sealedAt: sealedAtIso,
       });
       onDone(card.id, selected);
@@ -134,6 +164,23 @@ export function PickBinderScreen({
           style={styles.btn}
         />
       </View>
+
+      {/* Off-screen final composite when binder name stamp is on */}
+      {showBinderName ? (
+        <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
+          <CardFace
+            ref={cardRef}
+            photoUri={photoUri}
+            templateId={templateId}
+            dateFormatId={dateFormatId}
+            sealedAtIso={sealedAtIso}
+            width={width}
+            showDate={showDate}
+            locationLabel={locationLabel}
+            binderLabel={selectedName}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -185,4 +232,9 @@ const styles = StyleSheet.create({
     paddingBottom: space.lg,
   },
   btn: { flex: 1 },
+  offscreen: {
+    position: 'absolute',
+    left: -4000,
+    top: 0,
+  },
 });

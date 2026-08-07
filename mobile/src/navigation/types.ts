@@ -11,6 +11,9 @@ export type RootScreen =
       templateId: TemplateId;
       dateFormatId: DateFormatId;
       sealedAtIso: string;
+      showDate: boolean;
+      locationLabel: string | null;
+      showBinderName: boolean;
     }
   | {
       name: 'pickBinder';
@@ -21,5 +24,8 @@ export type RootScreen =
       compositeUri: string;
       width: number;
       height: number;
+      showDate: boolean;
+      locationLabel: string | null;
+      showBinderName: boolean;
     }
   | { name: 'settings' };

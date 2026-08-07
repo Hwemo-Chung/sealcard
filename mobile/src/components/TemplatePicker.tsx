@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,7 +10,6 @@ import {
 } from 'react-native';
 
 import {
-  FRAME_OVERLAYS,
   TEMPLATE_CATEGORY_IDS,
   templatesInCategory,
   type TemplateCategoryId,
@@ -31,6 +29,10 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Style-based mini card (no stretched PNG overlays — those clipped/broke at chip size).
+ * Mirrors CardFace proportions: inset photo + date band.
+ */
 function MiniFrame({
   spec,
   active,
@@ -40,69 +42,199 @@ function MiniFrame({
   active: boolean;
   compact?: boolean;
 }) {
-  const overlay = FRAME_OVERLAYS[spec.id];
+  const outerW = compact ? 48 : 64;
+  const outerH = Math.round(outerW / Math.min(Math.max(spec.aspect, 0.55), 0.95));
+  const pad = Math.max(3, outerW * 0.08);
+  const bandH = Math.max(8, outerH * Math.min(spec.dateBand, 0.2));
+  const photoH = Math.max(8, outerH - pad * 2 - bandH);
+  const photoR = Math.min(spec.photoRadius, compact ? 4 : 6);
+  const cardR = Math.min(spec.cornerRadius, compact ? 8 : 10);
+  const isNeon = spec.style === 'neon';
+  const bg = isNeon
+    ? '#050508'
+    : spec.background.startsWith('rgba')
+      ? '#2A2A2A'
+      : spec.background;
+
   return (
     <View
       style={[
         styles.miniOuter,
-        compact && styles.miniOuterCompact,
+        {
+          width: outerW + 8,
+          height: outerH + 8,
+        },
         active && styles.miniOuterActive,
-        spec.style === 'glass' || spec.style === 'neon'
-          ? { backgroundColor: '#1a1f2e' }
-          : { backgroundColor: colors.surface2 },
       ]}
     >
-      {overlay ? (
-        <View style={styles.miniOverlayWrap}>
+      <View
+        style={{
+          width: outerW,
+          height: outerH,
+          borderRadius: cardR,
+          backgroundColor: bg,
+          borderWidth: Math.min(spec.borderWidth || 1, 2),
+          borderColor: spec.borderColor,
+          overflow: 'hidden',
+        }}
+      >
+        {isNeon && (
           <View
-            style={[
-              styles.miniPhotoBg,
-              { backgroundColor: spec.chipFrom },
-            ]}
-          >
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: spec.chipTo, opacity: 0.45 }]} />
-          </View>
-          <Image source={overlay} style={styles.miniOverlay} resizeMode="stretch" />
-        </View>
-      ) : (
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: Math.min(spec.borderWidth, 2),
+              left: Math.min(spec.borderWidth, 2),
+              right: Math.min(spec.borderWidth, 2),
+              bottom: Math.min(spec.borderWidth, 2),
+              borderRadius: Math.max(0, cardR - Math.min(spec.borderWidth, 2)),
+              borderWidth: Math.min(spec.rimWidth ?? 2, 2),
+              borderColor: spec.rimColor ?? spec.chipTo,
+            }}
+          />
+        )}
+        {/* photo window */}
         <View
-          style={[
-            styles.miniCard,
-            {
-              backgroundColor: spec.background.startsWith('rgba') ? 'transparent' : spec.background,
-              borderColor: spec.borderColor,
-              borderWidth: Math.min(spec.borderWidth, 2),
-              borderRadius: Math.min(spec.cornerRadius, 10),
-            },
-          ]}
+          style={{
+            marginTop: pad,
+            marginHorizontal: pad,
+            height: photoH,
+            borderRadius: photoR,
+            backgroundColor: spec.chipFrom,
+            overflow: 'hidden',
+          }}
         >
           <View
             style={[
-              styles.miniPhoto,
-              {
-                margin: 5,
-                marginBottom: 2,
-                borderRadius: Math.min(spec.photoRadius, 6),
-                backgroundColor: spec.chipFrom,
-              },
+              StyleSheet.absoluteFill,
+              { backgroundColor: spec.chipTo, opacity: 0.5 },
             ]}
-          >
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  opacity: 0.55,
-                  backgroundColor: spec.chipTo,
-                  borderRadius: Math.min(spec.photoRadius, 6),
-                },
-              ]}
-            />
-          </View>
-          <View style={styles.miniDateLine}>
-            <View style={[styles.miniDateBar, { backgroundColor: spec.dateColor, opacity: 0.7 }]} />
-          </View>
+          />
+          {/* fake horizon line so chips look like photos */}
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: '28%',
+              height: 1,
+              backgroundColor: 'rgba(0,0,0,0.12)',
+            }}
+          />
         </View>
-      )}
+        {/* date bar */}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems:
+              spec.dateAlign === 'left'
+                ? 'flex-start'
+                : spec.dateAlign === 'right'
+                  ? 'flex-end'
+                  : 'center',
+            paddingHorizontal: pad,
+          }}
+        >
+          <View
+            style={{
+              height: 2,
+              width: '55%',
+              borderRadius: 1,
+              backgroundColor: spec.dateColor,
+              opacity: 0.75,
+            }}
+          />
+        </View>
+        {/* 35mm-style rectangular sprockets */}
+        {spec.deco === 'sprocket' && (
+          <>
+            <View style={[styles.miniSprocket, { left: 2 }]}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.miniSprocketHole} />
+              ))}
+            </View>
+            <View style={[styles.miniSprocket, { right: 2 }]}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.miniSprocketHole} />
+              ))}
+            </View>
+          </>
+        )}
+        {/* postage scallops — all 4 edges, larger dots on border */}
+        {spec.deco === 'perforation' &&
+          (() => {
+            const d = 7;
+            const step = d * 1.28;
+            const topN = Math.max(4, Math.round(outerW / step) + 1);
+            const sideN = Math.max(4, Math.round(outerH / step) + 1);
+            const topXs = Array.from({ length: topN }, (_, i) =>
+              (outerW * i) / (topN - 1),
+            );
+            const sideYs = Array.from({ length: sideN }, (_, i) =>
+              (outerH * i) / (sideN - 1),
+            );
+            const half = d / 2;
+            return (
+              <>
+                {topXs.map((x, i) => (
+                  <View
+                    key={`pt${i}`}
+                    style={[
+                      styles.miniPerfDot,
+                      { width: d, height: d, borderRadius: half, top: -half, left: x - half },
+                    ]}
+                  />
+                ))}
+                {topXs.map((x, i) => (
+                  <View
+                    key={`pb${i}`}
+                    style={[
+                      styles.miniPerfDot,
+                      {
+                        width: d,
+                        height: d,
+                        borderRadius: half,
+                        bottom: -half,
+                        left: x - half,
+                      },
+                    ]}
+                  />
+                ))}
+                {sideYs.slice(1, -1).map((y, i) => (
+                  <View
+                    key={`pl${i}`}
+                    style={[
+                      styles.miniPerfDot,
+                      {
+                        width: d,
+                        height: d,
+                        borderRadius: half,
+                        left: -half,
+                        top: y - half,
+                      },
+                    ]}
+                  />
+                ))}
+                {sideYs.slice(1, -1).map((y, i) => (
+                  <View
+                    key={`pr${i}`}
+                    style={[
+                      styles.miniPerfDot,
+                      {
+                        width: d,
+                        height: d,
+                        borderRadius: half,
+                        right: -half,
+                        top: y - half,
+                      },
+                    ]}
+                  />
+                ))}
+              </>
+            );
+          })()}
+      </View>
     </View>
   );
 }
@@ -308,89 +440,73 @@ const styles = StyleSheet.create({
   },
   cameraRow: {
     paddingHorizontal: space.md,
-    gap: 12,
+    gap: 10,
     alignItems: 'flex-end',
+    paddingBottom: 2,
   },
   cameraRowCompact: {
     gap: 8,
   },
   cameraItem: {
-    width: 76,
+    width: 78,
     alignItems: 'center',
   },
   cameraItemCompact: {
-    width: 56,
+    width: 58,
   },
   cameraLabel: {
-    marginTop: 6,
+    marginTop: 5,
     color: 'rgba(255,255,255,0.65)',
     fontSize: 11,
     fontWeight: '500',
+    maxWidth: 76,
+    textAlign: 'center',
   },
   cameraLabelCompact: {
-    marginTop: 4,
+    marginTop: 3,
     fontSize: 10,
+    maxWidth: 56,
   },
   cameraLabelActive: {
     color: '#fff',
     fontWeight: '700',
   },
   miniOuter: {
-    width: 64,
-    height: 78,
     borderRadius: 12,
     padding: 4,
     borderWidth: 2,
     borderColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  miniOuterCompact: {
-    width: 48,
-    height: 58,
-    borderRadius: 10,
-    padding: 3,
+    backgroundColor: colors.surface2,
   },
   miniOuterActive: {
     borderColor: colors.accent,
   },
-  miniOverlayWrap: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  miniPhotoBg: {
+  miniSprocket: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    right: 6,
-    bottom: 14,
-    borderRadius: 2,
+    top: '12%',
+    bottom: '18%',
+    width: 5,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
   },
-  miniOverlay: {
-    width: '100%',
-    height: '100%',
+  miniSprocketHole: {
+    width: 4,
+    height: 3,
+    borderRadius: 0.5,
+    backgroundColor: '#3A3A3A',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  miniCard: {
-    width: '100%',
-    height: '100%',
+  miniPerfDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
-  },
-  miniPhoto: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  miniDateLine: {
-    height: 10,
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  miniDateBar: {
-    height: 2,
-    width: '55%',
-    borderRadius: 1,
+    backgroundColor: colors.surface2,
+    zIndex: 3,
   },
   settingsGrid: {
     flexDirection: 'row',
