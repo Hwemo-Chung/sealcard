@@ -39,9 +39,14 @@ export interface Card {
   height: number;
 }
 
+/** User locale preference; system follows device (ko*, ja*, else en). */
+export type LocalePreference = 'system' | 'ko' | 'ja' | 'en';
+
 export interface Settings {
   defaultTemplateId: TemplateId;
   dateFormatId: DateFormatId;
+  /** UI language; default system */
+  locale: LocalePreference;
   /** P3 home widget pointer — null = unset */
   widgetBinderId?: BinderId | null;
   /** null = latest card in widgetBinderId */
@@ -55,11 +60,13 @@ export interface DbSnapshot {
   settings: Settings;
 }
 
+/** @deprecated Use t('cardDetail.uncategorized') after Task 3 screen migration. */
 export const UNCATEGORIZED_LABEL = '미분류';
 
 export const DEFAULT_SETTINGS: Settings = {
   defaultTemplateId: 'polaroid',
   dateFormatId: 'dot',
+  locale: 'system',
   widgetBinderId: null,
   widgetCardId: null,
 };

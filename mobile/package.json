@@ -8,9 +8,11 @@
     "expo-camera": "~57.0.3",
     "expo-file-system": "~57.0.1",
     "expo-image": "~57.0.2",
+    "expo-localization": "~57.0.1",
     "expo-media-library": "~57.0.3",
     "expo-sharing": "~57.0.8",
     "expo-status-bar": "~57.0.1",
+    "i18n-js": "^4.5.3",
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-safe-area-context": "~5.7.0",
@@ -18,7 +20,9 @@
     "react-native-view-shot": "5.1.0"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "@types/react": "~19.2.2",
+    "tsx": "^4.23.10",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -26,6 +30,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "tsx --test src/**/*.test.ts src/i18n/keys.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "private": true

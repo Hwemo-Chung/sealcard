@@ -45,7 +45,8 @@
           "savePhotosPermission": "배경화면·공유용 전시 이미지를 저장합니다.",
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }
