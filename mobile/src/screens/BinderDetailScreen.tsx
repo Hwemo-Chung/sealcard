@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -8,12 +8,8 @@ import {
   StyleSheet,
   Text,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 
-import { PresentActions } from '../presentation/PresentActions';
-import { PresentationStage } from '../presentation/PresentationStage';
 import { useFocusEffect } from '../hooks/useFocusEffect';
 import type { Card } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
@@ -26,18 +22,11 @@ type Props = {
   onOpenCard: (cardId: string) => void;
 };
 
-type Mode = 'grid' | 'wall';
-
 export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
   const { t, locale } = useI18n();
   const [title, setTitle] = useState('');
   const [cards, setCards] = useState<Card[]>([]);
-  const [mode, setMode] = useState<Mode>('grid');
-  const [wallIndex, setWallIndex] = useState(0);
-  const [wallListH, setWallListH] = useState(0);
   const colW = (Dimensions.get('window').width - space.md * 2 - space.sm) / 2;
-  const pageW = Dimensions.get('window').width;
-  const listRef = useRef<FlatList<Card>>(null);
 
   const reload = useCallback(async () => {
     if (binderId === null) {
@@ -47,7 +36,6 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
       setTitle(b?.name ?? t('binderDetail.fallbackTitle'));
     }
     setCards(await repo.listCards(binderId));
-    // locale (not t): t is a stable translate ref; locale change must recompute labels
   }, [binderId, locale, t]);
 
   useFocusEffect(reload);
@@ -68,21 +56,13 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
     ]);
   };
 
-  const onWallScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const i = Math.round(x / pageW);
-    if (i !== wallIndex && i >= 0 && i < cards.length) setWallIndex(i);
-  };
-
-  const wallCard = cards[wallIndex];
-
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <Pressable onPress={onBack} accessibilityRole="button">
           <Text style={styles.link}>← {t('common.back')}</Text>
         </Pressable>
-        {binderId !== null && mode === 'grid' && (
+        {binderId !== null && (
           <Pressable onPress={onDeleteBinder} accessibilityRole="button">
             <Text style={styles.danger}>{t('binderDetail.deleteAction')}</Text>
           </Pressable>
@@ -93,105 +73,27 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
         {t('binderDetail.meta', { count: cards.length })}
       </Text>
 
-      {/* mode: grid | wall — no lock, no separate tab (E1, E7) */}
-      <View style={styles.modeRow}>
-        {(['grid', 'wall'] as const).map((m) => {
-          const on = mode === m;
-          const disabled = m === 'wall' && cards.length === 0;
-          const label =
-            m === 'grid' ? t('binderDetail.modeGrid') : t('binderDetail.modePresent');
-          return (
-            <Pressable
-              key={m}
-              disabled={disabled}
-              onPress={() => {
-                setMode(m);
-                if (m === 'wall') setWallIndex(0);
-              }}
-              style={[styles.modeChip, on && styles.modeChipOn, disabled && { opacity: 0.35 }]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on, disabled }}
-              accessibilityLabel={label}
-            >
-              <Text style={[styles.modeText, on && styles.modeTextOn]}>{label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {mode === 'grid' ? (
-        <FlatList
-          data={cards}
-          keyExtractor={(c) => c.id}
-          numColumns={2}
-          columnWrapperStyle={styles.cols}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>{t('binderDetail.empty')}</Text>}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => onOpenCard(item.id)}
-              style={[styles.cell, { width: colW }]}
-              accessibilityRole="button"
-            >
-              <Image
-                source={{ uri: item.imagePath }}
-                style={{ width: colW, height: colW * 1.25, borderRadius: 6 }}
-                resizeMode="cover"
-              />
-            </Pressable>
-          )}
-        />
-      ) : (
-        <View style={styles.wallRoot}>
-          <FlatList
-            ref={listRef}
-            style={styles.wallList}
-            data={cards}
-            keyExtractor={(c) => c.id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onWallScroll}
-            onLayout={(e) => setWallListH(e.nativeEvent.layout.height)}
-            getItemLayout={(_, index) => ({
-              length: pageW,
-              offset: pageW * index,
-              index,
-            })}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.wallPage,
-                  { width: pageW, height: wallListH > 0 ? wallListH : undefined },
-                ]}
-              >
-                <PresentationStage
-                  imageUri={item.imagePath}
-                  binderName={title}
-                  sealedAtIso={item.sealedAt}
-                  dateFormatId={item.dateFormatId}
-                  profile="screen"
-                  showCaption={false}
-                  width={Math.min(pageW - space.lg * 2, 360)}
-                />
-              </View>
-            )}
-          />
-          {wallCard && (
-            <View style={styles.wallFooter}>
-              <View style={styles.wallFooterTop}>
-                <Text style={styles.wallCount}>
-                  {wallIndex + 1} / {cards.length}
-                </Text>
-                <Pressable onPress={() => onOpenCard(wallCard.id)} accessibilityRole="button">
-                  <Text style={styles.link}>{t('binderDetail.cardDetail')}</Text>
-                </Pressable>
-              </View>
-              <PresentActions card={wallCard} binderName={title} compact />
-            </View>
-          )}
-        </View>
-      )}
+      <FlatList
+        data={cards}
+        keyExtractor={(c) => c.id}
+        numColumns={2}
+        columnWrapperStyle={styles.cols}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={<Text style={styles.empty}>{t('binderDetail.empty')}</Text>}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() => onOpenCard(item.id)}
+            style={[styles.cell, { width: colW }]}
+            accessibilityRole="button"
+          >
+            <Image
+              source={{ uri: item.imagePath }}
+              style={{ width: colW, height: colW * 1.25, borderRadius: 6 }}
+              resizeMode="cover"
+            />
+          </Pressable>
+        )}
+      />
     </View>
   );
 }
@@ -216,56 +118,10 @@ const styles = StyleSheet.create({
   meta: {
     color: colors.textMuted,
     paddingHorizontal: space.md,
-    marginBottom: space.sm,
-  },
-  modeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: space.md,
     marginBottom: space.md,
   },
-  modeChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  modeChipOn: {
-    borderColor: colors.accent,
-    backgroundColor: colors.surface2,
-  },
-  modeText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
-  modeTextOn: { color: colors.text },
   list: { padding: space.md, paddingBottom: space.xl },
   cols: { justifyContent: 'space-between', marginBottom: space.sm },
   cell: {},
   empty: { color: colors.textMuted, marginTop: space.lg },
-  wallRoot: { flex: 1, minHeight: 0 },
-  wallList: { flex: 1 },
-  wallPage: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space.sm,
-  },
-  wallFooter: {
-    paddingHorizontal: space.md,
-    paddingTop: space.sm,
-    paddingBottom: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bg,
-  },
-  wallFooterTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space.sm,
-  },
-  wallCount: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
-  },
 });

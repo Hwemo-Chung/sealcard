@@ -25,10 +25,7 @@ export const en = {
     deleteBody: 'Only the binder is removed. Cards move to Uncategorized.',
     deleteAction: 'Delete binder',
     meta: '%{count} cards · newest first',
-    modeGrid: 'Grid',
-    modePresent: 'Exhibit',
     empty: 'No cards yet.',
-    cardDetail: 'Card details',
   },
   cardDetail: {
     notFound: 'Card not found.',
@@ -90,7 +87,7 @@ export const en = {
     languageEn: 'English',
     widgetSection: 'Home widget (preview)',
     widgetHint:
-      'In-app target for a future home widget. Pin from card detail or exhibit. Not a store-claimed widget until native ships.',
+      'In-app target for a future home widget. Pin from card detail. Not a store-claimed widget until native ships.',
     widgetCard: 'Pinned card · %{id}…',
     widgetBinder: 'Latest in binder · %{id}…',
     widgetUnset: 'Not set',

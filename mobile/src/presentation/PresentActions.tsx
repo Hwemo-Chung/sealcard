@@ -22,9 +22,8 @@ type Props = {
 };
 
 /**
- * P1–P3 entry points from card detail / wall mode.
- * Off-screen PresentationStage is captured for share/wallpaper (E9: temp only).
- * Sealing flow never mounts this component (E8).
+ * Share / wallpaper / widget pin from card detail.
+ * Off-screen PresentationStage is captured for share/wallpaper (temp only).
  */
 export function PresentActions({ card, binderName, compact }: Props) {
   const { t } = useI18n();

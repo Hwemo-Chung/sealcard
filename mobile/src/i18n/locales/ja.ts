@@ -27,10 +27,7 @@ export const ja: TranslationTree = {
     deleteBody: 'バインダーのみ削除します。カードは未分類に移ります。',
     deleteAction: 'バインダーを削除',
     meta: '%{count}枚 · 新しい順',
-    modeGrid: 'グリッド',
-    modePresent: '展示',
     empty: 'カードはまだありません。',
-    cardDetail: 'カード詳細',
   },
   cardDetail: {
     notFound: 'カードが見つかりません。',
@@ -92,7 +89,7 @@ export const ja: TranslationTree = {
     languageEn: 'English',
     widgetSection: 'ホームウィジェット（プレビュー）',
     widgetHint:
-      '将来のホームウィジェット用のアプリ内ターゲットです。カード詳細・展示から固定します。ネイティブ提供までストアでウィジェット提供を主張しません。',
+      '将来のホームウィジェット用のアプリ内ターゲットです。カード詳細から固定します。ネイティブ提供までストアでウィジェット提供を主張しません。',
     widgetCard: '固定カード · %{id}…',
     widgetBinder: 'バインダー最新 · %{id}…',
     widgetUnset: '未設定',

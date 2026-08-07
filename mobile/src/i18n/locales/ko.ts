@@ -27,10 +27,7 @@ export const ko: TranslationTree = {
     deleteBody: '바인더만 삭제합니다. 카드는 미분류로 남습니다.',
     deleteAction: '바인더 삭제',
     meta: '%{count}장 · 최신순',
-    modeGrid: '그리드',
-    modePresent: '전시',
     empty: '카드가 없습니다.',
-    cardDetail: '카드 상세',
   },
   cardDetail: {
     notFound: '카드를 찾을 수 없습니다.',
@@ -92,7 +89,7 @@ export const ko: TranslationTree = {
     languageEn: 'English',
     widgetSection: '홈 위젯 (미리보기)',
     widgetHint:
-      '향후 홈 위젯용 인앱 대상입니다. 카드 상세·전시에서 고정하세요. 네이티브 위젯 출시 전까지 스토어에 위젯 제공을 주장하지 않습니다.',
+      '향후 홈 위젯용 인앱 대상입니다. 카드 상세에서 고정하세요. 네이티브 위젯 출시 전까지 스토어에 위젯 제공을 주장하지 않습니다.',
     widgetCard: '고정 카드 · %{id}…',
     widgetBinder: '바인더 최신 · %{id}…',
     widgetUnset: '미설정',
