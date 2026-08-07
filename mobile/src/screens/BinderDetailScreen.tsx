@@ -34,6 +34,7 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
   const [cards, setCards] = useState<Card[]>([]);
   const [mode, setMode] = useState<Mode>('grid');
   const [wallIndex, setWallIndex] = useState(0);
+  const [wallListH, setWallListH] = useState(0);
   const colW = (Dimensions.get('window').width - space.md * 2 - space.sm) / 2;
   const pageW = Dimensions.get('window').width;
   const listRef = useRef<FlatList<Card>>(null);
@@ -144,33 +145,48 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
         <View style={styles.wallRoot}>
           <FlatList
             ref={listRef}
+            style={styles.wallList}
             data={cards}
             keyExtractor={(c) => c.id}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={onWallScroll}
+            onLayout={(e) => setWallListH(e.nativeEvent.layout.height)}
+            getItemLayout={(_, index) => ({
+              length: pageW,
+              offset: pageW * index,
+              index,
+            })}
             renderItem={({ item }) => (
-              <View style={{ width: pageW, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                style={[
+                  styles.wallPage,
+                  { width: pageW, height: wallListH > 0 ? wallListH : undefined },
+                ]}
+              >
                 <PresentationStage
                   imageUri={item.imagePath}
                   binderName={title}
                   sealedAtIso={item.sealedAt}
                   dateFormatId={item.dateFormatId}
                   profile="screen"
-                  width={Math.min(pageW - 24, 400)}
+                  showCaption={false}
+                  width={Math.min(pageW - space.lg * 2, 360)}
                 />
               </View>
             )}
           />
           {wallCard && (
             <View style={styles.wallFooter}>
-              <Text style={styles.wallCount}>
-                {wallIndex + 1} / {cards.length}
-              </Text>
-              <Pressable onPress={() => onOpenCard(wallCard.id)}>
-                <Text style={styles.link}>{t('binderDetail.cardDetail')}</Text>
-              </Pressable>
+              <View style={styles.wallFooterTop}>
+                <Text style={styles.wallCount}>
+                  {wallIndex + 1} / {cards.length}
+                </Text>
+                <Pressable onPress={() => onOpenCard(wallCard.id)} accessibilityRole="button">
+                  <Text style={styles.link}>{t('binderDetail.cardDetail')}</Text>
+                </Pressable>
+              </View>
               <PresentActions card={wallCard} binderName={title} compact />
             </View>
           )}
@@ -226,19 +242,30 @@ const styles = StyleSheet.create({
   cols: { justifyContent: 'space-between', marginBottom: space.sm },
   cell: {},
   empty: { color: colors.textMuted, marginTop: space.lg },
-  wallRoot: { flex: 1 },
+  wallRoot: { flex: 1, minHeight: 0 },
+  wallList: { flex: 1 },
+  wallPage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: space.sm,
+  },
   wallFooter: {
     paddingHorizontal: space.md,
+    paddingTop: space.sm,
     paddingBottom: space.md,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     backgroundColor: colors.bg,
   },
+  wallFooterTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space.sm,
+  },
   wallCount: {
     color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: space.sm,
-    marginBottom: 4,
     fontSize: 13,
+    fontWeight: '600',
   },
 });

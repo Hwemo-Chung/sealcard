@@ -50,7 +50,8 @@ export function WidgetHomePreview() {
         sealedAtIso={card.sealedAt}
         dateFormatId={card.dateFormatId}
         profile="widget"
-        width={280}
+        showCaption
+        width={260}
       />
     </View>
   );

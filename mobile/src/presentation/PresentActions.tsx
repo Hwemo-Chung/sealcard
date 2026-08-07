@@ -116,6 +116,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
   return (
     <View style={styles.wrap}>
       {/* Off-screen capture target — fixed size for consistent share/wallpaper output */}
+      {/* Capture target: sealed card as-is on dark ground (matches in-app exhibit). */}
       <View style={styles.offscreen} pointerEvents="none">
         <PresentationStage
           ref={stageRef}
@@ -124,6 +125,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
           sealedAtIso={card.sealedAt}
           dateFormatId={card.dateFormatId}
           profile="share"
+          showCaption={false}
           width={540}
         />
       </View>
