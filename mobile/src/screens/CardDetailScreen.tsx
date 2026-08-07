@@ -12,7 +12,6 @@ import {
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import { formatSealDate } from '../domain/dates';
-import { resolveTemplate } from '../domain/templates';
 import type { Binder, Card } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
 import { useI18n } from '../i18n/I18nProvider';
@@ -99,7 +98,7 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
 
       <Text style={styles.date}>{formatSealDate(card.sealedAt, card.dateFormatId)}</Text>
       <Text style={styles.meta}>
-        {binderName} · {resolveTemplate(card.templateId).label}
+        {binderName} · {t(`template.${card.templateId}_label`)}
       </Text>
       <Text style={styles.frozen}>{t('cardDetail.frozen')}</Text>
 

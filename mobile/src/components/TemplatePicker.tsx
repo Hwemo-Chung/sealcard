@@ -12,12 +12,13 @@ import {
 
 import {
   FRAME_OVERLAYS,
-  TEMPLATE_CATEGORIES,
+  TEMPLATE_CATEGORY_IDS,
   templatesInCategory,
   type TemplateCategoryId,
   type TemplateSpec,
 } from '../domain/templates';
 import type { TemplateId } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import { colors, space } from '../theme';
 
 type Props = {
@@ -28,14 +29,14 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
-  const overlay = FRAME_OVERLAYS[t.id];
+function MiniFrame({ spec, active }: { spec: TemplateSpec; active: boolean }) {
+  const overlay = FRAME_OVERLAYS[spec.id];
   return (
     <View
       style={[
         styles.miniOuter,
         active && styles.miniOuterActive,
-        t.style === 'glass' || t.style === 'neon'
+        spec.style === 'glass' || spec.style === 'neon'
           ? { backgroundColor: '#1a1f2e' }
           : { backgroundColor: colors.surface2 },
       ]}
@@ -45,10 +46,10 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
           <View
             style={[
               styles.miniPhotoBg,
-              { backgroundColor: t.chipFrom },
+              { backgroundColor: spec.chipFrom },
             ]}
           >
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: t.chipTo, opacity: 0.45 }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: spec.chipTo, opacity: 0.45 }]} />
           </View>
           <Image source={overlay} style={styles.miniOverlay} resizeMode="stretch" />
         </View>
@@ -57,10 +58,10 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
           style={[
             styles.miniCard,
             {
-              backgroundColor: t.background.startsWith('rgba') ? 'transparent' : t.background,
-              borderColor: t.borderColor,
-              borderWidth: Math.min(t.borderWidth, 2),
-              borderRadius: Math.min(t.cornerRadius, 10),
+              backgroundColor: spec.background.startsWith('rgba') ? 'transparent' : spec.background,
+              borderColor: spec.borderColor,
+              borderWidth: Math.min(spec.borderWidth, 2),
+              borderRadius: Math.min(spec.cornerRadius, 10),
             },
           ]}
         >
@@ -70,8 +71,8 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
               {
                 margin: 5,
                 marginBottom: 2,
-                borderRadius: Math.min(t.photoRadius, 6),
-                backgroundColor: t.chipFrom,
+                borderRadius: Math.min(spec.photoRadius, 6),
+                backgroundColor: spec.chipFrom,
               },
             ]}
           >
@@ -80,14 +81,14 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
                 StyleSheet.absoluteFill,
                 {
                   opacity: 0.55,
-                  backgroundColor: t.chipTo,
-                  borderRadius: Math.min(t.photoRadius, 6),
+                  backgroundColor: spec.chipTo,
+                  borderRadius: Math.min(spec.photoRadius, 6),
                 },
               ]}
             />
           </View>
           <View style={styles.miniDateLine}>
-            <View style={[styles.miniDateBar, { backgroundColor: t.dateColor, opacity: 0.7 }]} />
+            <View style={[styles.miniDateBar, { backgroundColor: spec.dateColor, opacity: 0.7 }]} />
           </View>
         </View>
       )}
@@ -96,9 +97,10 @@ function MiniFrame({ t, active }: { t: TemplateSpec; active: boolean }) {
 }
 
 export function TemplatePicker({ value, onChange, variant = 'camera', style }: Props) {
+  const { t } = useI18n();
   const activeCat = useMemo(() => {
     const list = templatesInCategory('all');
-    return list.find((t) => t.id === value)?.category ?? 'instant';
+    return list.find((spec) => spec.id === value)?.category ?? 'instant';
   }, [value]);
 
   const [category, setCategory] = useState<TemplateCategoryId | 'all'>(activeCat);
@@ -128,15 +130,15 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
             category === 'all' && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
           ]}
         >
-          전체
+          {t('category.all')}
         </Text>
       </Pressable>
-      {TEMPLATE_CATEGORIES.map((c) => {
-        const on = category === c.id;
+      {TEMPLATE_CATEGORY_IDS.map((id) => {
+        const on = category === id;
         return (
           <Pressable
-            key={c.id}
-            onPress={() => setCategory(c.id)}
+            key={id}
+            onPress={() => setCategory(id)}
             style={[
               styles.catChip,
               settingsMode && styles.catChipSettings,
@@ -152,7 +154,7 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
                 on && (settingsMode ? styles.catTextActiveSettings : styles.catTextActive),
               ]}
             >
-              {c.label}
+              {t(`category.${id}`)}
             </Text>
           </Pressable>
         );
@@ -165,22 +167,24 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
       <View style={style}>
         {catChips}
         <View style={styles.settingsGrid}>
-          {items.map((t) => {
-            const active = t.id === value;
+          {items.map((spec) => {
+            const active = spec.id === value;
+            const label = t(`template.${spec.id}_label`);
+            const sub = t(`template.${spec.id}_sub`);
             return (
               <Pressable
-                key={t.id}
-                onPress={() => onChange(t.id)}
+                key={spec.id}
+                onPress={() => onChange(spec.id)}
                 style={[styles.settingsCell, active && styles.settingsCellActive]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <MiniFrame t={t} active={active} />
+                <MiniFrame spec={spec} active={active} />
                 <Text style={styles.settingsLabel} numberOfLines={1}>
-                  {t.label}
+                  {label}
                 </Text>
                 <Text style={styles.settingsSub} numberOfLines={1}>
-                  {t.subtitle}
+                  {sub}
                 </Text>
               </Pressable>
             );
@@ -198,23 +202,24 @@ export function TemplatePicker({ value, onChange, variant = 'camera', style }: P
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.cameraRow}
       >
-        {items.map((t) => {
-          const active = t.id === value;
+        {items.map((spec) => {
+          const active = spec.id === value;
+          const label = t(`template.${spec.id}_label`);
           return (
             <Pressable
-              key={t.id}
-              onPress={() => onChange(t.id)}
+              key={spec.id}
+              onPress={() => onChange(spec.id)}
               style={styles.cameraItem}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={t.label}
+              accessibilityLabel={label}
             >
-              <MiniFrame t={t} active={active} />
+              <MiniFrame spec={spec} active={active} />
               <Text
                 style={[styles.cameraLabel, active && styles.cameraLabelActive]}
                 numberOfLines={1}
               >
-                {t.label}
+                {label}
               </Text>
             </Pressable>
           );

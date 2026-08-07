@@ -128,6 +128,7 @@ export const en = {
     widgetPreviewCaption: 'Widget preview',
   },
   category: {
+    all: 'All',
     instant: 'Instant',
     glass: 'Glass',
     gallery: 'Gallery',

@@ -1,4 +1,5 @@
 import type { TemplateId } from './types';
+import { t } from '../i18n';
 
 export type FrameStyle =
   | 'polaroid'
@@ -19,21 +20,16 @@ export type TemplateCategoryId =
   | 'film'
   | 'play';
 
-export const TEMPLATE_CATEGORIES: {
-  id: TemplateCategoryId;
-  label: string;
-}[] = [
-  { id: 'instant', label: '인스턴트' },
-  { id: 'glass', label: '글라스' },
-  { id: 'gallery', label: '갤러리' },
-  { id: 'film', label: '필름·티켓' },
-  { id: 'play', label: '플레이' },
+export const TEMPLATE_CATEGORY_IDS: TemplateCategoryId[] = [
+  'instant',
+  'glass',
+  'gallery',
+  'film',
+  'play',
 ];
 
 export interface TemplateSpec {
   id: TemplateId;
-  label: string;
-  subtitle: string;
   category: TemplateCategoryId;
   style: FrameStyle;
   /** Transparent PNG overlay under assets/frames/ */
@@ -95,8 +91,6 @@ export const PRESENTATION_MATTE = require('../../assets/frames/presentation_matt
 export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   polaroid: {
     id: 'polaroid',
-    label: '폴라로이드',
-    subtitle: '클래식 흰 테두리',
     category: 'instant',
     style: 'polaroid',
     aspect: 0.8,
@@ -117,8 +111,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   polaroid_cream: {
     id: 'polaroid_cream',
-    label: '크림 폴라',
-    subtitle: '따뜻한 아이보리',
     category: 'instant',
     style: 'polaroid',
     aspect: 0.78,
@@ -139,8 +131,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   polaroid_black: {
     id: 'polaroid_black',
-    label: '블랙 폴라',
-    subtitle: '어두운 인스턴트',
     category: 'instant',
     style: 'polaroid',
     aspect: 0.8,
@@ -161,8 +151,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   glass: {
     id: 'glass',
-    label: '글라스',
-    subtitle: '글라스모피즘',
     category: 'glass',
     style: 'glass',
     aspect: 0.82,
@@ -187,8 +175,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   glass_aurora: {
     id: 'glass_aurora',
-    label: '오로라 글라스',
-    subtitle: '보랏빛 유리',
     category: 'glass',
     style: 'glass',
     aspect: 0.8,
@@ -213,8 +199,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   frame_dark: {
     id: 'frame_dark',
-    label: '다크 프레임',
-    subtitle: '갤러리 블랙',
     category: 'gallery',
     style: 'matte',
     aspect: 0.75,
@@ -236,8 +220,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   frame_gold: {
     id: 'frame_gold',
-    label: '골드 프레임',
-    subtitle: '오너먼트 금테',
     category: 'gallery',
     style: 'ornate',
     aspect: 0.72,
@@ -261,8 +243,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   frame_wood: {
     id: 'frame_wood',
-    label: '우드 프레임',
-    subtitle: '따뜻한 나무 톤',
     category: 'gallery',
     style: 'ornate',
     aspect: 0.74,
@@ -287,8 +267,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   minimal: {
     id: 'minimal',
-    label: '미니멀',
-    subtitle: '얇은 화이트',
     category: 'gallery',
     style: 'matte',
     aspect: 0.85,
@@ -309,8 +287,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   matte_gallery: {
     id: 'matte_gallery',
-    label: '갤러리 매트',
-    subtitle: '넓은 여백',
     category: 'gallery',
     style: 'matte',
     aspect: 0.7,
@@ -332,8 +308,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   film_strip: {
     id: 'film_strip',
-    label: '필름 스트립',
-    subtitle: '스프로켓 홀',
     category: 'film',
     style: 'film',
     aspect: 0.7,
@@ -355,8 +329,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   ticket: {
     id: 'ticket',
-    label: '티켓',
-    subtitle: '스텁 컷 감성',
     category: 'film',
     style: 'ticket',
     aspect: 0.62,
@@ -378,8 +350,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   neon: {
     id: 'neon',
-    label: '네온',
-    subtitle: '야광 보더',
     category: 'play',
     style: 'neon',
     aspect: 0.8,
@@ -402,8 +372,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   postage: {
     id: 'postage',
-    label: '우표',
-    subtitle: '톱니 가장자리',
     category: 'film',
     style: 'postage',
     aspect: 0.78,
@@ -425,8 +393,6 @@ export const TEMPLATES: Record<TemplateId, TemplateSpec> = {
   },
   soft_round: {
     id: 'soft_round',
-    label: '소프트 라운드',
-    subtitle: '둥근 카드',
     category: 'play',
     style: 'soft',
     aspect: 0.84,
@@ -464,6 +430,19 @@ export const TEMPLATE_LIST: TemplateSpec[] = [
   TEMPLATES.postage,
   TEMPLATES.soft_round,
 ];
+
+
+export function templateLabel(id: TemplateId): string {
+  return t(`template.${id}_label`);
+}
+
+export function templateSubtitle(id: TemplateId): string {
+  return t(`template.${id}_sub`);
+}
+
+export function categoryLabel(id: TemplateCategoryId | 'all'): string {
+  return t(`category.${id}`);
+}
 
 export function resolveTemplate(id: string | undefined | null): TemplateSpec {
   if (id && id in TEMPLATES) return TEMPLATES[id as TemplateId];

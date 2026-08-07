@@ -80,7 +80,7 @@ export function SealPreviewScreen({
     <View style={styles.root}>
       <Text style={styles.title}>{t('sealPreview.title')}</Text>
       <Text style={styles.hint}>
-        {t('sealPreview.asSeen', { template: template.label })}
+        {t('sealPreview.asSeen', { template: t(`template.${templateId}_label`) })}
       </Text>
       <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
         <CardFace

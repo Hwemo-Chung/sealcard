@@ -130,6 +130,7 @@ export const ja: TranslationTree = {
     widgetPreviewCaption: 'ウィジェットプレビュー',
   },
   category: {
+    all: 'すべて',
     instant: 'インスタント',
     glass: 'ガラス',
     gallery: 'ギャラリー',

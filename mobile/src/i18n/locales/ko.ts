@@ -130,6 +130,7 @@ export const ko: TranslationTree = {
     widgetPreviewCaption: '위젯 미리보기',
   },
   category: {
+    all: '전체',
     instant: '인스턴트',
     glass: '글라스',
     gallery: '갤러리',
