@@ -1,5 +1,5 @@
 /** Play Console · privacy page · in-app support — replace before P7 submit. */
-export const SUPPORT_EMAIL = 'REPLACE_BEFORE_SUBMIT@example.com';
+export const SUPPORT_EMAIL = 'tolaria@naver.com';
 
 export const PRIVACY_POLICY_URL =
   'https://hwemo-chung.github.io/sealcard-privacy.html';
