@@ -14,7 +14,6 @@ Sealcard turns a photo into a sealed card and keeps it in a series binder. Once 
 • Capture with the camera and seal immediately
 • Frame templates and date stamps
 • Organize series in binders
-• Exhibit cards inside the app
 • Share as an image (system share sheet)
 • Save an image for wallpaper
 
