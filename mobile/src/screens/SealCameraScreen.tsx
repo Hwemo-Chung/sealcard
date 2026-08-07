@@ -1,8 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -10,10 +9,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { TemplatePicker } from '../components/TemplatePicker';
 import { formatSealDate, nowIso } from '../domain/dates';
-import { FRAME_OVERLAYS, resolveTemplate } from '../domain/templates';
+import { cardLayout } from '../domain/templates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
 import { colors, space } from '../theme';
@@ -31,101 +31,9 @@ type Props = {
 };
 
 /**
- * Live frame guide: template aspect + overlay PNG + date slot.
- * Does not clip — sized with contain against available center area.
+ * Live seal camera: CardFace chrome + CameraView in the photo slot.
+ * Same geometry as SealPreviewScreen so viewfinder ≈ sealed result (cover crop).
  */
-function FrameGuide({
-  templateId,
-  dateFormatId,
-  maxW,
-  maxH,
-}: {
-  templateId: TemplateId;
-  dateFormatId: DateFormatId;
-  maxW: number;
-  maxH: number;
-}) {
-  const spec = resolveTemplate(templateId);
-  const overlay = FRAME_OVERLAYS[templateId];
-  const aspect = spec.aspect > 0 ? spec.aspect : 0.8;
-
-  let guideW = maxW;
-  let guideH = guideW / aspect;
-  if (guideH > maxH) {
-    guideH = maxH;
-    guideW = guideH * aspect;
-  }
-
-  const dateStr = formatSealDate(nowIso(), dateFormatId);
-  const dateBandPx = guideH * spec.dateBand;
-
-  return (
-    <View
-      style={[styles.guideOuter, { width: guideW, height: guideH }]}
-      pointerEvents="none"
-      collapsable={false}
-    >
-      {/* Full-bleed frame PNG (transparent center = viewfinder) */}
-      {overlay ? (
-        <Image
-          source={overlay}
-          style={{ width: guideW, height: guideH }}
-          resizeMode="stretch"
-        />
-      ) : (
-        <View
-          style={{
-            width: guideW,
-            height: guideH,
-            borderWidth: Math.max(2, spec.borderWidth),
-            borderColor: spec.borderColor,
-            borderRadius: Math.min(spec.cornerRadius, 12),
-          }}
-        />
-      )}
-      <View
-        style={[
-          styles.guideDateBand,
-          {
-            height: dateBandPx,
-            justifyContent:
-              spec.dateAlign === 'center'
-                ? 'center'
-                : spec.dateAlign === 'right'
-                  ? 'flex-end'
-                  : 'flex-start',
-            paddingHorizontal: guideW * 0.08,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.guideDate,
-            {
-              // dark ink on light mats; light ink on dark mats
-              color: isLightHex(spec.background) ? '#2A2620' : 'rgba(255,255,255,0.92)',
-              fontWeight: spec.dateWeight,
-              letterSpacing: spec.dateLetterSpacing,
-              fontSize: Math.max(11, guideW * 0.045),
-              textAlign: spec.dateAlign,
-            },
-          ]}
-        >
-          {dateStr}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function isLightHex(bg: string): boolean {
-  if (!bg.startsWith('#') || bg.length < 7) return true;
-  const r = parseInt(bg.slice(1, 3), 16);
-  const g = parseInt(bg.slice(3, 5), 16);
-  const b = parseInt(bg.slice(5, 7), 16);
-  return (r + g + b) / 3 > 140;
-}
-
 export function SealCameraScreen({
   defaultTemplateId,
   dateFormatId,
@@ -139,20 +47,40 @@ export function SealCameraScreen({
   const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [templateId, setTemplateId] = useState<TemplateId>(defaultTemplateId);
   const [busy, setBusy] = useState(false);
-  /** Collapsed by default so viewfinder is usable; expand to change frame. */
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const sealedAtIso = nowIso();
 
   const win = Dimensions.get('window');
   const topBarH = insets.top + 56;
-  const bottomCollapsed = Math.max(insets.bottom, 8) + 120;
-  const bottomExpanded = Math.max(insets.bottom, 8) + 280;
-  const bottomH = pickerOpen ? bottomExpanded : bottomCollapsed;
+  // Reserve expanded picker height so card/camera size stays fixed (no remount churn).
+  const bottomReserve = Math.max(insets.bottom, 8) + 280;
 
-  const guideMax = useMemo(() => {
-    const maxW = win.width * 0.88;
-    const maxH = Math.max(160, win.height - topBarH - bottomH - 24);
-    return { maxW, maxH };
-  }, [win.width, win.height, topBarH, bottomH]);
+  const cardWidth = useMemo(() => {
+    const maxW = win.width * 0.86;
+    const maxH = Math.max(160, win.height - topBarH - bottomReserve - 24);
+    const { t: spec } = cardLayout(templateId, maxW);
+    const aspect = spec.aspect || 0.8;
+    let w = maxW;
+    let h = w / aspect;
+    if (h > maxH) {
+      h = maxH;
+      w = h * aspect;
+    }
+    return Math.floor(w);
+  }, [win.width, win.height, topBarH, bottomReserve, templateId]);
+
+  const { photoW, photoH } = useMemo(
+    () => cardLayout(templateId, cardWidth),
+    [templateId, cardWidth],
+  );
+
+  useEffect(() => {
+    setCameraReady(false);
+    // Some Android devices never fire onCameraReady for nested previews; unlock shutter.
+    const unlock = setTimeout(() => setCameraReady(true), 1800);
+    return () => clearTimeout(unlock);
+  }, [facing, templateId]);
 
   const templateLabel = t(`template.${templateId}_label`);
 
@@ -180,7 +108,7 @@ export function SealCameraScreen({
   }
 
   const take = async () => {
-    if (!cameraRef.current || busy) return;
+    if (!cameraRef.current || busy || !cameraReady) return;
     setBusy(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -188,6 +116,8 @@ export function SealCameraScreen({
         skipProcessing: false,
       });
       if (!photo?.uri) return;
+      // Full sensor image; SealPreview CardFace uses resizeMode="cover" into the
+      // same photoW×photoH aspect as this live CameraView — center crop matches.
       onCaptured({
         photoUri: photo.uri,
         templateId,
@@ -206,85 +136,91 @@ export function SealCameraScreen({
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
-      <View style={styles.overlay} pointerEvents="box-none">
-        <View style={[styles.topBar, { paddingTop: insets.top + space.sm }]}>
-          <Pressable onPress={onCancel} accessibilityRole="button">
-            <Text style={styles.topLink}>{t('common.close')}</Text>
-          </Pressable>
-          <View style={styles.bannerCol}>
-            <Text style={styles.banner}>{t('sealCamera.banner')}</Text>
-            <Text style={styles.datePreview}>{formatSealDate(nowIso(), dateFormatId)}</Text>
-          </View>
-          <Pressable
-            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-            accessibilityRole="button"
-            accessibilityLabel={t('sealCamera.flipA11y')}
-          >
-            <Text style={styles.topLink}>{t('sealCamera.flip')}</Text>
-          </Pressable>
+      <View style={[styles.topBar, { paddingTop: insets.top + space.sm }]}>
+        <Pressable onPress={onCancel} accessibilityRole="button">
+          <Text style={styles.topLink}>{t('common.close')}</Text>
+        </Pressable>
+        <View style={styles.bannerCol}>
+          <Text style={styles.banner}>{t('sealCamera.banner')}</Text>
+          <Text style={styles.datePreview}>{formatSealDate(sealedAtIso, dateFormatId)}</Text>
         </View>
-
-        <View style={styles.guideArea} pointerEvents="none">
-          <FrameGuide
-            templateId={templateId}
-            dateFormatId={dateFormatId}
-            maxW={guideMax.maxW}
-            maxH={guideMax.maxH}
-          />
-        </View>
-
-        <View
-          style={[
-            styles.bottomBlock,
-            { paddingBottom: Math.max(insets.bottom, space.sm) + 4 },
-          ]}
+        <Pressable
+          onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+          accessibilityRole="button"
+          accessibilityLabel={t('sealCamera.flipA11y')}
         >
-          {pickerOpen ? (
-            <>
-              <Pressable
-                onPress={() => setPickerOpen(false)}
-                style={styles.panelHeader}
-                accessibilityRole="button"
-                accessibilityLabel={t('sealCamera.collapsePickerA11y')}
-              >
-                <View style={styles.handle} />
-                <Text style={styles.panelHeaderText}>
-                  {t('sealCamera.frame')} · {templateLabel} · {t('sealCamera.collapsePicker')}
-                </Text>
-              </Pressable>
-              <TemplatePicker
-                value={templateId}
-                onChange={onPickTemplate}
-                variant="camera"
-                compact
-              />
-            </>
-          ) : (
+          <Text style={styles.topLink}>{t('sealCamera.flip')}</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.stage}>
+        <CardFace
+          templateId={templateId}
+          dateFormatId={dateFormatId}
+          sealedAtIso={sealedAtIso}
+          width={cardWidth}
+          photoSlot={
+            <CameraView
+              key={facing}
+              ref={cameraRef}
+              style={{ width: photoW, height: photoH }}
+              facing={facing}
+              onCameraReady={() => setCameraReady(true)}
+            />
+          }
+        />
+      </View>
+
+      <View
+        style={[
+          styles.bottomBlock,
+          { paddingBottom: Math.max(insets.bottom, space.sm) + 4 },
+        ]}
+      >
+        {pickerOpen ? (
+          <>
             <Pressable
-              onPress={() => setPickerOpen(true)}
-              style={styles.collapsedStrip}
+              onPress={() => setPickerOpen(false)}
+              style={styles.panelHeader}
               accessibilityRole="button"
-              accessibilityLabel={t('sealCamera.expandPickerA11y')}
+              accessibilityLabel={t('sealCamera.collapsePickerA11y')}
             >
               <View style={styles.handle} />
-              <Text style={styles.collapsedText} numberOfLines={1}>
-                {t('sealCamera.frame')} · {templateLabel} · {t('sealCamera.expandPicker')}
+              <Text style={styles.panelHeaderText}>
+                {t('sealCamera.frame')} · {templateLabel} · {t('sealCamera.collapsePicker')}
               </Text>
             </Pressable>
-          )}
+            <TemplatePicker
+              value={templateId}
+              onChange={onPickTemplate}
+              variant="camera"
+              compact
+            />
+          </>
+        ) : (
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            style={styles.collapsedStrip}
+            accessibilityRole="button"
+            accessibilityLabel={t('sealCamera.expandPickerA11y')}
+          >
+            <View style={styles.handle} />
+            <Text style={styles.collapsedText} numberOfLines={1}>
+              {t('sealCamera.frame')} · {templateLabel} · {t('sealCamera.expandPicker')}
+            </Text>
+          </Pressable>
+        )}
 
-          <View style={styles.shutterRow}>
-            <Pressable
-              onPress={() => void take()}
-              disabled={busy}
-              style={[styles.shutter, busy && { opacity: 0.5 }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('sealCamera.shutterA11y')}
-            >
-              <View style={styles.shutterInner} />
-            </Pressable>
-          </View>
+        <View style={styles.shutterRow}>
+          <Pressable
+            onPress={() => void take()}
+            disabled={busy || !cameraReady}
+            style={[styles.shutter, (busy || !cameraReady) && { opacity: 0.5 }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('sealCamera.shutterA11y')}
+          >
+            <View style={styles.shutterInner} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -292,18 +228,13 @@ export function SealCameraScreen({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: 'space-between',
-  },
+  root: { flex: 1, backgroundColor: '#0A0A0A' },
   topBar: {
     paddingHorizontal: space.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     paddingBottom: space.sm,
     zIndex: 2,
   },
@@ -317,27 +248,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     letterSpacing: 0.6,
   },
-  guideArea: {
+  stage: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
   },
-  guideOuter: {
-    borderRadius: 4,
-  },
-  guideDateBand: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'stretch',
-  },
-  guideDate: {
-    width: '100%',
-  },
   bottomBlock: {
-    backgroundColor: 'rgba(0,0,0,0.62)',
+    backgroundColor: 'rgba(0,0,0,0.72)',
     paddingTop: 6,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,

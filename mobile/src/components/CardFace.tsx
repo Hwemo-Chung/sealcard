@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo } from 'react';
+import React, { forwardRef, useMemo, type ReactNode } from 'react';
 import { Image, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { formatSealDate } from '../domain/dates';
@@ -6,7 +6,13 @@ import { resolveTemplate, type TemplateSpec } from '../domain/templates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 
 type Props = {
-  photoUri: string;
+  /** Still photo for seal preview / capture. Omit when photoSlot is live camera. */
+  photoUri?: string;
+  /**
+   * Live content in the photo window (e.g. CameraView).
+   * Must use cover-style fill so it matches Image resizeMode="cover" after capture.
+   */
+  photoSlot?: ReactNode;
   templateId: TemplateId | string;
   dateFormatId: DateFormatId;
   sealedAtIso: string;
@@ -90,7 +96,16 @@ function GlassLayers({ t, width, height }: { t: TemplateSpec; width: number; hei
  * After seal, only the exported image is stored — this component is for preview + capture.
  */
 export const CardFace = forwardRef<View, Props>(function CardFace(
-  { photoUri, templateId, dateFormatId, sealedAtIso, width, style, stageColor },
+  {
+    photoUri,
+    photoSlot,
+    templateId,
+    dateFormatId,
+    sealedAtIso,
+    width,
+    style,
+    stageColor,
+  },
   ref,
 ) {
   const t = resolveTemplate(templateId);
@@ -206,16 +221,25 @@ export const CardFace = forwardRef<View, Props>(function CardFace(
               }}
             />
           )}
-          <Image
-            source={{ uri: photoUri }}
+          <View
             style={{
               width: photoW,
               height: photoH,
               backgroundColor: '#111',
               borderRadius: t.photoRadius,
+              overflow: 'hidden',
             }}
-            resizeMode="cover"
-          />
+          >
+            {photoSlot != null ? (
+              photoSlot
+            ) : photoUri ? (
+              <Image
+                source={{ uri: photoUri }}
+                style={{ width: photoW, height: photoH }}
+                resizeMode="cover"
+              />
+            ) : null}
+          </View>
         </View>
 
         {/* Ticket accent strip */}

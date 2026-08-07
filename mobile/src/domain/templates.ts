@@ -444,6 +444,17 @@ export function categoryLabel(id: TemplateCategoryId | 'all'): string {
   return t(`category.${id}`);
 }
 
+/** Layout numbers shared by CardFace and live camera (WYSIWYG). */
+export function cardLayout(templateId: string | undefined | null, width: number) {
+  const t = resolveTemplate(templateId);
+  const height = width / t.aspect;
+  const inset = width * t.photoInset;
+  const dateBandH = height * t.dateBand;
+  const photoH = Math.max(1, height - inset * 2 - dateBandH);
+  const photoW = Math.max(1, width - inset * 2);
+  return { t, height, inset, dateBandH, photoW, photoH };
+}
+
 export function resolveTemplate(id: string | undefined | null): TemplateSpec {
   if (id && id in TEMPLATES) return TEMPLATES[id as TemplateId];
   return TEMPLATES.polaroid;
