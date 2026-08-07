@@ -60,9 +60,6 @@ export interface DbSnapshot {
   settings: Settings;
 }
 
-/** @deprecated Use t('cardDetail.uncategorized') after Task 3 screen migration. */
-export const UNCATEGORIZED_LABEL = '미분류';
-
 export const DEFAULT_SETTINGS: Settings = {
   defaultTemplateId: 'polaroid',
   dateFormatId: 'dot',

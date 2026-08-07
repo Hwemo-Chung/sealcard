@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Card } from '../domain/types';
-import { UNCATEGORIZED_LABEL } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 import { PresentationStage } from './PresentationStage';
@@ -12,8 +12,9 @@ import { PresentationStage } from './PresentationStage';
  * Native Android App Widget still needs a dev-client module; this is the same renderer.
  */
 export function WidgetHomePreview() {
+  const { t } = useI18n();
   const [card, setCard] = useState<Card | null>(null);
-  const [binderName, setBinderName] = useState(UNCATEGORIZED_LABEL);
+  const [binderName, setBinderName] = useState(() => t('cardDetail.uncategorized'));
 
   useEffect(() => {
     void (async () => {
@@ -22,24 +23,24 @@ export function WidgetHomePreview() {
       if (!c) return;
       if (c.binderId) {
         const b = await repo.getBinder(c.binderId);
-        setBinderName(b?.name ?? UNCATEGORIZED_LABEL);
+        setBinderName(b?.name ?? t('cardDetail.uncategorized'));
       } else {
-        setBinderName(UNCATEGORIZED_LABEL);
+        setBinderName(t('cardDetail.uncategorized'));
       }
     })();
-  }, []);
+  }, [t]);
 
   if (!card) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>위젯 대상이 없습니다. 카드에서 고정하세요.</Text>
+        <Text style={styles.emptyText}>{t('present.widgetPreviewEmpty')}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.caption}>위젯 미리보기</Text>
+      <Text style={styles.caption}>{t('present.widgetPreviewCaption')}</Text>
       <PresentationStage
         imageUri={card.imagePath}
         binderName={binderName}

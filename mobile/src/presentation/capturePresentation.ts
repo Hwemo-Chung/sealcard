@@ -4,9 +4,10 @@ import type { View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 import type { PresentationProfile } from '../domain/types';
+import { t } from '../i18n';
 
 /**
  * Capture presentation stage to a *temp* JPEG.
@@ -30,12 +31,12 @@ export async function capturePresentationTemp(
 export async function sharePresentationImage(tempUri: string): Promise<void> {
   const available = await Sharing.isAvailableAsync();
   if (!available) {
-    Alert.alert('공유할 수 없습니다', '이 기기에서 공유 시트를 열 수 없습니다.');
+    Alert.alert(t('present.cannotShareTitle'), t('present.cannotShareBody'));
     return;
   }
   await Sharing.shareAsync(tempUri, {
     mimeType: 'image/jpeg',
-    dialogTitle: '이미지로 보내기',
+    dialogTitle: t('present.shareA11y'),
     UTI: 'public.jpeg',
   });
 }
@@ -49,7 +50,7 @@ export async function sharePresentationImage(tempUri: string): Promise<void> {
 export async function setAsWallpaperFlow(tempUri: string): Promise<void> {
   const perm = await MediaLibrary.requestPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('권한이 필요합니다', '배경화면용 이미지를 저장하려면 사진 권한이 필요합니다.');
+    Alert.alert(t('present.needPhotosTitle'), t('present.needPhotosBody'));
     return;
   }
 
@@ -66,17 +67,11 @@ export async function setAsWallpaperFlow(tempUri: string): Promise<void> {
   }
 
   if (Platform.OS === 'android') {
-    Alert.alert(
-      '이미지를 저장했습니다',
-      '갤러리의 Sealcard 앨범에서 배경화면으로 설정해 주세요. (기기마다 경로가 다릅니다.)',
-    );
+    Alert.alert(t('present.savedTitle'), t('present.savedBody'));
     return;
   }
 
-  Alert.alert(
-    '이미지를 저장했습니다',
-    '사진 앱에서 해당 이미지를 연 뒤 배경화면으로 설정해 주세요.',
-  );
+  Alert.alert(t('present.savedTitle'), t('present.savedFallbackBody'));
 }
 
 /** Clean temp capture when done (best effort). */

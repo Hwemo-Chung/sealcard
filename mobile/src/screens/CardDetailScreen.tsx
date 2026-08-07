@@ -14,8 +14,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { formatSealDate } from '../domain/dates';
 import { resolveTemplate } from '../domain/templates';
 import type { Binder, Card } from '../domain/types';
-import { UNCATEGORIZED_LABEL } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
+import { useI18n } from '../i18n/I18nProvider';
 import { PresentActions } from '../presentation/PresentActions';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
@@ -27,6 +27,7 @@ type Props = {
 };
 
 export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
+  const { t } = useI18n();
   const [card, setCard] = useState<Card | null>(null);
   const [binderName, setBinderName] = useState('');
   const [binders, setBinders] = useState<Binder[]>([]);
@@ -40,10 +41,10 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
       const b = await repo.getBinder(c.binderId);
       setBinderName(b?.name ?? '');
     } else {
-      setBinderName(UNCATEGORIZED_LABEL);
+      setBinderName(t('cardDetail.uncategorized'));
     }
     setBinders(await repo.listBinders());
-  }, [cardId]);
+  }, [cardId, t]);
 
   useFocusEffect(reload);
 
@@ -51,18 +52,18 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
     return (
       <View style={styles.root}>
         <Pressable onPress={onBack}>
-          <Text style={styles.link}>← 뒤로</Text>
+          <Text style={styles.link}>← {t('common.back')}</Text>
         </Pressable>
-        <Text style={styles.meta}>카드를 찾을 수 없습니다.</Text>
+        <Text style={styles.meta}>{t('cardDetail.notFound')}</Text>
       </View>
     );
   }
 
   const destroy = () => {
-    Alert.alert('이 카드를 파기할까요?', '파기하면 복구할 수 없습니다.', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('cardDetail.destroyTitle'), t('cardDetail.destroyBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: '파기',
+        text: t('cardDetail.destroy'),
         style: 'destructive',
         onPress: () =>
           void (async () => {
@@ -86,7 +87,7 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Pressable onPress={onBack} accessibilityRole="button">
-        <Text style={styles.link}>← 뒤로</Text>
+        <Text style={styles.link}>← {t('common.back')}</Text>
       </Pressable>
 
       <Image
@@ -99,12 +100,12 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
       <Text style={styles.meta}>
         {binderName} · {resolveTemplate(card.templateId).label}
       </Text>
-      <Text style={styles.frozen}>사진·날짜·템플릿은 변경할 수 없습니다.</Text>
+      <Text style={styles.frozen}>{t('cardDetail.frozen')}</Text>
 
       <PresentActions card={card} binderName={binderName} />
 
       <PrimaryButton
-        label="다른 바인더로 이동"
+        label={t('cardDetail.move')}
         onPress={() => setShowMove((s) => !s)}
         variant="ghost"
         style={{ marginTop: space.md }}
@@ -117,17 +118,17 @@ export function CardDetailScreen({ cardId, onBack, onDestroyed }: Props) {
             </Pressable>
           ))}
           <Pressable onPress={() => moveTo(null)} style={styles.moveRow}>
-            <Text style={styles.moveText}>{UNCATEGORIZED_LABEL}</Text>
+            <Text style={styles.moveText}>{t('cardDetail.uncategorized')}</Text>
           </Pressable>
         </View>
       )}
 
       <PrimaryButton
-        label="파기"
+        label={t('cardDetail.destroy')}
         onPress={destroy}
         variant="danger"
         style={{ marginTop: space.sm }}
-        accessibilityLabel="카드 파기"
+        accessibilityLabel={t('cardDetail.destroyA11y')}
       />
     </ScrollView>
   );

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TemplatePicker } from '../components/TemplatePicker';
 import type { DateFormatId, Settings, TemplateId } from '../domain/types';
 import { isTemplateId } from '../domain/templates';
+import { useI18n } from '../i18n/I18nProvider';
 import { WidgetHomePreview } from '../presentation/WidgetHomePreview';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function SettingsScreen({ onBack }: Props) {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
@@ -32,22 +34,30 @@ export function SettingsScreen({ onBack }: Props) {
     ? settings.defaultTemplateId
     : 'polaroid';
 
+  const widgetStatus = settings.widgetCardId
+    ? t('settings.widgetCard', { id: settings.widgetCardId.slice(0, 10) })
+    : settings.widgetBinderId
+      ? t('settings.widgetBinder', { id: settings.widgetBinderId.slice(0, 10) })
+      : t('settings.widgetUnset');
+
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Pressable onPress={onBack} accessibilityRole="button">
-        <Text style={styles.link}>← 뒤로</Text>
+        <Text style={styles.link}>← {t('common.back')}</Text>
       </Pressable>
-      <Text style={styles.title}>설정</Text>
+      <Text style={styles.title}>{t('settings.title')}</Text>
 
-      <Text style={styles.section}>기본 프레임</Text>
-      <Text style={styles.sectionHint}>촬영 시 기본값. 카테고리로 고르세요.</Text>
+      <Text style={styles.section}>{t('settings.defaultFrame')}</Text>
+      <Text style={styles.sectionHint}>{t('settings.defaultFrameHint')}</Text>
       <TemplatePicker
         value={templateId}
         onChange={(id) => void patch({ defaultTemplateId: id })}
         variant="settings"
       />
 
-      <Text style={[styles.section, { marginTop: space.lg }]}>날짜 형식</Text>
+      <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.dateFormat')}
+      </Text>
       {(
         [
           { id: 'dot' as DateFormatId, label: 'YYYY.MM.DD' },
@@ -63,18 +73,12 @@ export function SettingsScreen({ onBack }: Props) {
         </Pressable>
       ))}
 
-      <Text style={[styles.section, { marginTop: space.lg }]}>홈 위젯</Text>
-      <Text style={styles.sectionHint}>
-        Android 홈 화면 위젯 1종. 카드 상세·전시에서 「위젯에 고정」으로 대상을 정합니다.
+      <Text style={[styles.section, { marginTop: space.lg }]}>
+        {t('settings.widgetSection')}
       </Text>
+      <Text style={styles.sectionHint}>{t('settings.widgetHint')}</Text>
       <View style={styles.row}>
-        <Text style={styles.rowText}>
-          {settings.widgetCardId
-            ? `고정 카드 · ${settings.widgetCardId.slice(0, 10)}…`
-            : settings.widgetBinderId
-              ? `바인더 최신 · ${settings.widgetBinderId.slice(0, 10)}…`
-              : '미설정'}
-        </Text>
+        <Text style={styles.rowText}>{widgetStatus}</Text>
       </View>
       {(settings.widgetBinderId || settings.widgetCardId) && (
         <Pressable
@@ -83,7 +87,9 @@ export function SettingsScreen({ onBack }: Props) {
           }
           style={[styles.row, { marginTop: space.sm }]}
         >
-          <Text style={[styles.rowText, { color: colors.danger }]}>위젯 대상 해제</Text>
+          <Text style={[styles.rowText, { color: colors.danger }]}>
+            {t('settings.widgetClear')}
+          </Text>
         </Pressable>
       )}
       <WidgetHomePreview

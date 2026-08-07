@@ -3,7 +3,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { Card } from '../domain/types';
-import { UNCATEGORIZED_LABEL } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
 import { space } from '../theme';
 import {
@@ -27,9 +27,10 @@ type Props = {
  * Sealing flow never mounts this component (E8).
  */
 export function PresentActions({ card, binderName, compact }: Props) {
+  const { t } = useI18n();
   const stageRef = useRef<View>(null);
   const [busy, setBusy] = useState<'share' | 'wall' | 'widget' | null>(null);
-  const name = binderName || UNCATEGORIZED_LABEL;
+  const name = binderName || t('cardDetail.uncategorized');
 
   const runCapture = async (profile: 'share' | 'wallpaper') => {
     // wait a frame so offscreen stage lays out
@@ -45,7 +46,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
       uri = await runCapture('share');
       await sharePresentationImage(uri);
     } catch {
-      Alert.alert('공유하지 못했습니다', '다시 시도해 주세요.');
+      Alert.alert(t('present.shareFailTitle'), t('present.shareFailBody'));
     } finally {
       await deleteTempQuiet(uri);
       setBusy(null);
@@ -60,7 +61,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
       uri = await runCapture('wallpaper');
       await setAsWallpaperFlow(uri);
     } catch {
-      Alert.alert('저장하지 못했습니다', '다시 시도해 주세요.');
+      Alert.alert(t('present.saveFailTitle'), t('present.saveFailBody'));
     } finally {
       await deleteTempQuiet(uri);
       setBusy(null);
@@ -69,10 +70,10 @@ export function PresentActions({ card, binderName, compact }: Props) {
 
   const onWidget = () => {
     if (busy) return;
-    Alert.alert('위젯에 고정', '홈 화면에 이 카드(또는 바인더 최신)를 고정합니다.', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('present.widgetTitle'), t('present.widgetBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: '이 카드 고정',
+        text: t('present.widgetThisCard'),
         onPress: () =>
           void (async () => {
             setBusy('widget');
@@ -82,8 +83,8 @@ export function PresentActions({ card, binderName, compact }: Props) {
                 widgetCardId: card.id,
               });
               Alert.alert(
-                '고정했습니다',
-                '홈 화면에서 Sealcard 위젯을 추가하면 이 카드가 표시됩니다. (Android 개발 빌드에서 위젯 제공)',
+                t('present.widgetPinnedTitle'),
+                t('present.widgetPinnedCardBody'),
               );
             } finally {
               setBusy(null);
@@ -91,7 +92,7 @@ export function PresentActions({ card, binderName, compact }: Props) {
           })(),
       },
       {
-        text: '바인더 최신',
+        text: t('present.widgetBinderLatest'),
         onPress: () =>
           void (async () => {
             setBusy('widget');
@@ -101,8 +102,8 @@ export function PresentActions({ card, binderName, compact }: Props) {
                 widgetCardId: null,
               });
               Alert.alert(
-                '고정했습니다',
-                '해당 바인더의 최신 카드가 위젯에 표시됩니다. 홈 화면에 위젯을 추가하세요.',
+                t('present.widgetPinnedTitle'),
+                t('present.widgetPinnedBinderBody'),
               );
             } finally {
               setBusy(null);
@@ -128,27 +129,27 @@ export function PresentActions({ card, binderName, compact }: Props) {
       </View>
 
       <PrimaryButton
-        label="이미지 공유"
+        label={t('present.share')}
         onPress={() => void onShare()}
         loading={busy === 'share'}
         variant="ghost"
-        accessibilityLabel="이미지로 보내기"
+        accessibilityLabel={t('present.shareA11y')}
         style={styles.btn}
       />
       <PrimaryButton
-        label="배경화면으로"
+        label={t('present.wallpaper')}
         onPress={() => void onWallpaper()}
         loading={busy === 'wall'}
         variant="ghost"
-        accessibilityLabel="배경화면으로"
+        accessibilityLabel={t('present.wallpaperA11y')}
         style={styles.btn}
       />
       <PrimaryButton
-        label="위젯에 고정…"
+        label={t('present.widgetPin')}
         onPress={onWidget}
         loading={busy === 'widget'}
         variant="ghost"
-        accessibilityLabel="위젯에 고정"
+        accessibilityLabel={t('present.widgetPinA11y')}
         style={styles.btn}
       />
       {compact ? null : null}

@@ -13,6 +13,7 @@ import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { resolveTemplate } from '../domain/templates';
+import { useI18n } from '../i18n/I18nProvider';
 import { colors, space } from '../theme';
 
 type Props = {
@@ -36,6 +37,7 @@ export function SealPreviewScreen({
   onRetake,
   onConfirmSeal,
 }: Props) {
+  const { t } = useI18n();
   const cardRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const screenW = Dimensions.get('window').width;
@@ -44,17 +46,13 @@ export function SealPreviewScreen({
   const cardH = cardW / template.aspect;
 
   const confirm = () => {
-    Alert.alert(
-      '이 카드로 밀봉할까요?',
-      '밀봉 후에는 사진·날짜·템플릿을 바꿀 수 없습니다.\n바인더는 나중에 옮길 수 있습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '밀봉하기',
-          onPress: () => void captureAndProceed(),
-        },
-      ],
-    );
+    Alert.alert(t('sealPreview.confirmTitle'), t('sealPreview.confirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('sealPreview.seal'),
+        onPress: () => void captureAndProceed(),
+      },
+    ]);
   };
 
   const captureAndProceed = async () => {
@@ -72,7 +70,7 @@ export function SealPreviewScreen({
         height: Math.round(cardH),
       });
     } catch {
-      Alert.alert('밀봉하지 못했습니다', '다시 시도해 주세요.');
+      Alert.alert(t('sealPreview.failTitle'), t('sealPreview.failBody'));
     } finally {
       setBusy(false);
     }
@@ -80,9 +78,9 @@ export function SealPreviewScreen({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>미리보기</Text>
+      <Text style={styles.title}>{t('sealPreview.title')}</Text>
       <Text style={styles.hint}>
-        {template.label} · 보이는 그대로 밀봉됩니다.
+        {t('sealPreview.asSeen', { template: template.label })}
       </Text>
       <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
         <CardFace
@@ -95,13 +93,18 @@ export function SealPreviewScreen({
         />
       </ScrollView>
       <View style={styles.actions}>
-        <PrimaryButton label="다시 찍기" onPress={onRetake} variant="ghost" style={styles.btn} />
         <PrimaryButton
-          label="밀봉하기"
+          label={t('sealPreview.retake')}
+          onPress={onRetake}
+          variant="ghost"
+          style={styles.btn}
+        />
+        <PrimaryButton
+          label={t('sealPreview.seal')}
           onPress={confirm}
           loading={busy}
           style={styles.btn}
-          accessibilityLabel="밀봉하기"
+          accessibilityLabel={t('sealPreview.sealA11y')}
         />
       </View>
     </View>

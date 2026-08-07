@@ -11,6 +11,7 @@ import {
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { Binder, DateFormatId, TemplateId } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -36,6 +37,7 @@ export function PickBinderScreen({
   onDone,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
   const [binders, setBinders] = useState<Binder[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -50,7 +52,7 @@ export function PickBinderScreen({
   }, []);
 
   const createAndSelect = async () => {
-    const b = await repo.createBinder(newName || '나의 첫 시리즈');
+    const b = await repo.createBinder(newName.trim() || t('pickBinder.defaultName'));
     setBinders((prev) => [b, ...prev]);
     setSelected(b.id);
     setNewName('');
@@ -58,7 +60,7 @@ export function PickBinderScreen({
 
   const seal = async () => {
     if (!selected || busy) {
-      if (!selected) Alert.alert('시리즈를 선택하세요');
+      if (!selected) Alert.alert(t('pickBinder.needSelect'));
       return;
     }
     setBusy(true);
@@ -74,7 +76,7 @@ export function PickBinderScreen({
       });
       onDone(card.id, selected);
     } catch {
-      Alert.alert('밀봉하지 못했습니다', '다시 시도해 주세요.');
+      Alert.alert(t('pickBinder.failTitle'), t('pickBinder.failBody'));
     } finally {
       setBusy(false);
     }
@@ -82,13 +84,13 @@ export function PickBinderScreen({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>어느 시리즈에 꽂을까?</Text>
+      <Text style={styles.title}>{t('pickBinder.title')}</Text>
       <FlatList
         data={binders}
         keyExtractor={(b) => b.id}
         style={styles.list}
         ListEmptyComponent={
-          <Text style={styles.empty}>시리즈가 없습니다. 아래에서 만드세요.</Text>
+          <Text style={styles.empty}>{t('pickBinder.empty')}</Text>
         }
         renderItem={({ item }) => {
           const active = item.id === selected;
@@ -108,16 +110,25 @@ export function PickBinderScreen({
         <TextInput
           value={newName}
           onChangeText={setNewName}
-          placeholder="시리즈 이름"
+          placeholder={t('pickBinder.placeholder')}
           placeholderTextColor={colors.textMuted}
           style={styles.input}
         />
-        <PrimaryButton label="새 바인더" onPress={() => void createAndSelect()} variant="ghost" />
+        <PrimaryButton
+          label={t('pickBinder.newBinder')}
+          onPress={() => void createAndSelect()}
+          variant="ghost"
+        />
       </View>
       <View style={styles.actions}>
-        <PrimaryButton label="취소" onPress={onCancel} variant="ghost" style={styles.btn} />
         <PrimaryButton
-          label="꽂고 밀봉 완료"
+          label={t('common.cancel')}
+          onPress={onCancel}
+          variant="ghost"
+          style={styles.btn}
+        />
+        <PrimaryButton
+          label={t('pickBinder.finish')}
           onPress={() => void seal()}
           loading={busy}
           style={styles.btn}

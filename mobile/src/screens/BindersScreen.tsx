@@ -11,7 +11,7 @@ import { useFocusEffect } from '../hooks/useFocusEffect';
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import type { Binder } from '../domain/types';
-import { UNCATEGORIZED_LABEL } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -29,6 +29,7 @@ type Props = {
 };
 
 export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
+  const { t } = useI18n();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,34 +48,40 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
     if (uncatCount > 0) {
       mapped.push({
         id: null,
-        name: UNCATEGORIZED_LABEL,
+        name: t('cardDetail.uncategorized'),
         count: uncatCount,
         thumb: await repo.latestThumbInBinder(null),
       });
     }
     setRows(mapped);
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useFocusEffect(reload);
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>바인더</Text>
-        <Pressable onPress={onSettings} accessibilityRole="button" accessibilityLabel="설정">
-          <Text style={styles.link}>설정</Text>
+        <Text style={styles.title}>{t('binders.title')}</Text>
+        <Pressable
+          onPress={onSettings}
+          accessibilityRole="button"
+          accessibilityLabel={t('binders.settingsA11y')}
+        >
+          <Text style={styles.link}>{t('binders.settings')}</Text>
         </Pressable>
       </View>
-      <Text style={styles.hint}>시리즈로 밀봉한 카드를 보관합니다.</Text>
+      <Text style={styles.hint}>{t('binders.hint')}</Text>
 
       {rows.length === 0 && !loading ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>첫 시리즈를 만드세요</Text>
-          <Text style={styles.emptyBody}>
-            밀봉하면 바인더에 꽂힙니다. 수정할 수 없습니다.
-          </Text>
-          <PrimaryButton label="밀봉하기" onPress={onSeal} style={{ marginTop: space.lg }} />
+          <Text style={styles.emptyTitle}>{t('binders.emptyTitle')}</Text>
+          <Text style={styles.emptyBody}>{t('binders.emptyBody')}</Text>
+          <PrimaryButton
+            label={t('binders.seal')}
+            onPress={onSeal}
+            style={{ marginTop: space.lg }}
+          />
         </View>
       ) : (
         <FlatList
@@ -86,7 +93,10 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
               style={styles.row}
               onPress={() => onOpenBinder(item.id)}
               accessibilityRole="button"
-              accessibilityLabel={`${item.name}, ${item.count}장`}
+              accessibilityLabel={t('binders.rowA11y', {
+                name: item.name,
+                count: item.count,
+              })}
             >
               <View style={styles.thumbWrap}>
                 {item.thumb ? (
@@ -97,7 +107,9 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
               </View>
               <View style={styles.rowText}>
                 <Text style={styles.rowName}>{item.name}</Text>
-                <Text style={styles.rowMeta}>{item.count}장</Text>
+                <Text style={styles.rowMeta}>
+                  {t('binders.cardCount', { count: item.count })}
+                </Text>
               </View>
             </Pressable>
           )}
@@ -106,7 +118,11 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
 
       {rows.length > 0 && (
         <View style={styles.fabBar}>
-          <PrimaryButton label="밀봉+" onPress={onSeal} accessibilityLabel="밀봉 시작" />
+          <PrimaryButton
+            label={t('binders.sealPlus')}
+            onPress={onSeal}
+            accessibilityLabel={t('binders.sealStartA11y')}
+          />
         </View>
       )}
     </View>

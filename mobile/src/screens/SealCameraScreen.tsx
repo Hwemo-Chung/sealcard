@@ -12,6 +12,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { TemplatePicker } from '../components/TemplatePicker';
 import { formatSealDate, nowIso } from '../domain/dates';
 import type { DateFormatId, TemplateId } from '../domain/types';
+import { useI18n } from '../i18n/I18nProvider';
 import { colors, space } from '../theme';
 
 type Props = {
@@ -32,6 +33,7 @@ export function SealCameraScreen({
   onCaptured,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -46,10 +48,18 @@ export function SealCameraScreen({
   if (!permission.granted) {
     return (
       <View style={[styles.center, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <Text style={styles.permTitle}>카메라 권한이 필요합니다</Text>
-        <Text style={styles.permBody}>사진을 찍으려면 카메라 권한이 필요합니다.</Text>
-        <PrimaryButton label="권한 허용" onPress={() => void requestPermission()} />
-        <PrimaryButton label="뒤로" onPress={onCancel} variant="ghost" style={{ marginTop: space.sm }} />
+        <Text style={styles.permTitle}>{t('sealCamera.needPermissionTitle')}</Text>
+        <Text style={styles.permBody}>{t('sealCamera.needPermissionBody')}</Text>
+        <PrimaryButton
+          label={t('sealCamera.allow')}
+          onPress={() => void requestPermission()}
+        />
+        <PrimaryButton
+          label={t('common.back')}
+          onPress={onCancel}
+          variant="ghost"
+          style={{ marginTop: space.sm }}
+        />
       </View>
     );
   }
@@ -80,25 +90,25 @@ export function SealCameraScreen({
       <View style={styles.overlay} pointerEvents="box-none">
         <View style={[styles.topBar, { paddingTop: insets.top + space.sm }]}>
           <Pressable onPress={onCancel} accessibilityRole="button">
-            <Text style={styles.topLink}>닫기</Text>
+            <Text style={styles.topLink}>{t('common.close')}</Text>
           </Pressable>
           <View style={styles.bannerCol}>
-            <Text style={styles.banner}>밀봉하면 수정할 수 없습니다</Text>
+            <Text style={styles.banner}>{t('sealCamera.banner')}</Text>
             <Text style={styles.datePreview}>{formatSealDate(nowIso(), dateFormatId)}</Text>
           </View>
           <Pressable
             onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
             accessibilityRole="button"
-            accessibilityLabel="카메라 전환"
+            accessibilityLabel={t('sealCamera.flipA11y')}
           >
-            <Text style={styles.topLink}>전환</Text>
+            <Text style={styles.topLink}>{t('sealCamera.flip')}</Text>
           </Pressable>
         </View>
 
         <View style={styles.midSpacer} />
 
         <View style={[styles.bottomBlock, { paddingBottom: Math.max(insets.bottom, space.sm) + 8 }]}>
-          <Text style={styles.frameHint}>프레임</Text>
+          <Text style={styles.frameHint}>{t('sealCamera.frame')}</Text>
           <TemplatePicker value={templateId} onChange={setTemplateId} variant="camera" />
           <View style={styles.shutterRow}>
             <Pressable
@@ -106,7 +116,7 @@ export function SealCameraScreen({
               disabled={busy}
               style={[styles.shutter, busy && { opacity: 0.5 }]}
               accessibilityRole="button"
-              accessibilityLabel="촬영"
+              accessibilityLabel={t('sealCamera.shutterA11y')}
             >
               <View style={styles.shutterInner} />
             </Pressable>

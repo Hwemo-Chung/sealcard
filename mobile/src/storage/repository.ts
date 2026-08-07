@@ -80,12 +80,14 @@ export async function listBinders(): Promise<Binder[]> {
   );
 }
 
+/** Caller must pass a non-empty name (e.g. t('pickBinder.defaultName') when field empty). */
 export async function createBinder(name: string): Promise<Binder> {
-  const trimmed = name.trim() || '나의 첫 시리즈';
+  const trimmed = name.trim();
+  const finalName = trimmed.length > 0 ? trimmed : name;
   const db = await readDb();
   const binder: Binder = {
     id: createId('b'),
-    name: trimmed,
+    name: finalName,
     createdAt: new Date().toISOString(),
   };
   db.binders.push(binder);
