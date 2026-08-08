@@ -35,7 +35,13 @@ yarn-error.*
 # test / local artifacts
 coverage/
 emulator-screenshot.png
+*-run-screenshot.png
+mobile/store/qa-screenshots/
 *.log
+
+# build artifacts
+*.apk
+*.aab
 
 # IDE
 .idea/
