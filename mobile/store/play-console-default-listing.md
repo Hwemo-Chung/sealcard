@@ -14,8 +14,10 @@ Play Console → **성장 → 스토어 등록정보 → 기본 스토어 등록
 |------|------|------|
 | 앱 아이콘 | `store/assets/icon-512.png` | 512×512 PNG |
 | 특집 그래픽 | `store/assets/feature-graphic-1024x500.png` | 1024×500 PNG |
-| 휴대전화 스크린샷 1 | `store/assets/screenshots/01-binders.png` | 최소 2장 |
-| 휴대전화 스크린샷 2 | `store/assets/screenshots/02-binder-grid.png` | |
+| 휴대전화 스크린샷 1 | `store/assets/screenshots/01-binders.png` | 1080×1920 (9:16) |
+| 휴대전화 스크린샷 2 | `store/assets/screenshots/02-binder-grid.png` | 1080×1920 |
+| 휴대전화 스크린샷 3 | `store/assets/screenshots/03-card-detail.png` | 1080×1920 |
+| 휴대전화 스크린샷 4 | `store/assets/screenshots/04-move-binder.png` | 1080×1920 |
 
 - 태블릿/웨어 OS 스크린샷: 없음 (해당 없음 시 생략)
 - 동영상: 없음 (선택)
