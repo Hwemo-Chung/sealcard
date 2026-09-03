@@ -1,0 +1,123 @@
+- generic [ref=e4]:
+  - generic [ref=e7]:
+    - img "Google" [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e13]:
+        - heading "ログイン" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Google Play Console に移動するには、Google アカウントでログインしてください。このアカウントは、ブラウザ内の他の Google アプリで利用できます。
+      - generic [ref=e18]:
+        - generic [ref=e21]:
+          - generic [ref=e26]:
+            - textbox "メールアドレスまたは電話番号" [active] [ref=e27]
+            - generic:
+              - generic: メールアドレスまたは電話番号
+          - paragraph [ref=e28]:
+            - link "メールアドレスを忘れた場合" [ref=e29] [cursor=pointer]:
+              - /url: /signin/usernamerecovery?continue=https://play.google.com/console/u/0/developers/8529875141757011188/app/4974588088566171694/app-dashboard&dsh=S-2045521202:1786116397238118&flowEntry=ServiceLogin&flowName=WebLiteSignIn&followup=https://play.google.com/console/u/0/developers/8529875141757011188/app/4974588088566171694/app-dashboard&service=androiddeveloper
+        - paragraph [ref=e32]:
+          - text: ご自分のパソコンでない場合は、シークレット ブラウジング ウィンドウを使用してログインしてください。
+          - link "ゲストモードの使い方についての詳細（別サイト、新しいウィンドウで開きます）" [ref=e33] [cursor=pointer]:
+            - /url: https://support.google.com/accounts?p=signin_privatebrowsing&hl=ja
+            - text: ゲストモードの使い方の詳細
+        - generic [ref=e35]:
+          - button "次へ" [ref=e37]
+          - link "アカウントを作成" [ref=e39] [cursor=pointer]:
+            - /url: /lifecycle/flows/signup?continue=https://play.google.com/console/u/0/developers/8529875141757011188/app/4974588088566171694/app-dashboard&dsh=S-2045521202:1786116397238118&flowEntry=SignUp&flowName=GlifWebSignIn&followup=https://play.google.com/console/u/0/developers/8529875141757011188/app/4974588088566171694/app-dashboard&service=androiddeveloper
+  - contentinfo [ref=e40]:
+    - combobox [ref=e43] [cursor=pointer]:
+      - option "Afrikaans"
+      - option "azərbaycan"
+      - option "bosanski"
+      - option "català"
+      - option "Čeština"
+      - option "Cymraeg"
+      - option "Dansk"
+      - option "Deutsch"
+      - option "eesti"
+      - option "English (United Kingdom)"
+      - option "English (United States)"
+      - option "Español (España)"
+      - option "Español (Latinoamérica)"
+      - option "euskara"
+      - option "Filipino"
+      - option "Français (Canada)"
+      - option "Français (France)"
+      - option "Gaeilge"
+      - option "galego"
+      - option "Hrvatski"
+      - option "Indonesia"
+      - option "isiZulu"
+      - option "íslenska"
+      - option "Italiano"
+      - option "Kiswahili"
+      - option "latviešu"
+      - option "lietuvių"
+      - option "magyar"
+      - option "Melayu"
+      - option "Nederlands"
+      - option "norsk"
+      - option "o‘zbek"
+      - option "polski"
+      - option "Português (Brasil)"
+      - option "Português (Portugal)"
+      - option "română"
+      - option "shqip"
+      - option "Slovenčina"
+      - option "slovenščina"
+      - option "srpski (latinica)"
+      - option "Suomi"
+      - option "Svenska"
+      - option "Tiếng Việt"
+      - option "Türkçe"
+      - option "中文（香港）"
+      - option "日本語" [selected]
+      - option "繁體中文"
+      - option "简体中文"
+      - option "Ελληνικά"
+      - option "беларуская"
+      - option "български"
+      - option "кыргызча"
+      - option "қазақ тілі"
+      - option "македонски"
+      - option "монгол"
+      - option "Русский"
+      - option "српски (ћирилица)"
+      - option "Українська"
+      - option "ქართული"
+      - option "հայերեն"
+      - option "‫עברית‬‎"
+      - option "‫اردو‬‎"
+      - option "‫العربية‬‎"
+      - option "‫فارسی‬‎"
+      - option "አማርኛ"
+      - option "नेपाली"
+      - option "मराठी"
+      - option "हिन्दी"
+      - option "অসমীয়া"
+      - option "বাংলা"
+      - option "ਪੰਜਾਬੀ"
+      - option "ગુજરાતી"
+      - option "ଓଡ଼ିଆ"
+      - option "தமிழ்"
+      - option "తెలుగు"
+      - option "ಕನ್ನಡ"
+      - option "മലയാളം"
+      - option "සිංහල"
+      - option "ไทย"
+      - option "ລາວ"
+      - option "မြန်မာ"
+      - option "ខ្មែរ"
+      - option "한국어"
+    - list [ref=e44]:
+      - listitem [ref=e45]:
+        - link "Google アカウント ヘルプセンターを開く（別サイト、新しいウィンドウで開きます）" [ref=e46] [cursor=pointer]:
+          - /url: https://support.google.com/accounts?hl=ja&p=account_iph
+          - text: ヘルプ
+      - listitem [ref=e47]:
+        - link "プライバシー ポリシー（別サイト、新しいウィンドウで開きます）" [ref=e48] [cursor=pointer]:
+          - /url: https://accounts.google.com/TOS?loc=JP&hl=ja&privacy=true
+          - text: プライバシー
+      - listitem [ref=e49]:
+        - link "Google 利用規約（別サイト、新しいウィンドウで開きます）" [ref=e50] [cursor=pointer]:
+          - /url: https://accounts.google.com/TOS?loc=JP&hl=ja
+          - text: 規約
