@@ -1,32 +1,32 @@
+import { requireOptionalNativeModule } from 'expo';
 import * as Location from 'expo-location';
 
+import { getI18n } from '../i18n';
+import type { PlaceParts } from './placeLookup';
+import { createPlaceLabelLookup, type LocalizedGeocoder } from './placeSources';
+
+/** modules/sealcard-geocoder (Android): Geocoder built with the requested locale. */
+type SealcardGeocoderModule = {
+  reverseGeocodeAsync(latitude: number, longitude: number, language: string): Promise<PlaceParts[]>;
+};
+
+/** Null on iOS, Expo Go or a build without the module: expo-location (device language) is used. */
+const nativeGeocoder = requireOptionalNativeModule<SealcardGeocoderModule>('SealcardGeocoder');
+
+const localized: LocalizedGeocoder | null = nativeGeocoder
+  ? (coords, language) => nativeGeocoder.reverseGeocodeAsync(coords.latitude, coords.longitude, language)
+  : null;
+
 /**
- * On-device place label for seal stamp. Never uploaded.
- * Returns null if permission denied, GPS unavailable, or geocode empty.
+ * On-device place lookup for the seal stamp. Never uploaded.
+ * `label` is null if permission is denied, GPS is unavailable, geocode is empty,
+ * or the lookup runs out of time; `recentLabel` is the last-known position's
+ * label, queried in parallel (see placeLookup; permission dialog time is not counted).
+ * `prompt: false` (restarts) reads the permission without showing the dialog.
+ * Place names follow the app UI language (i18n locale), not the device language.
  */
-export async function resolvePlaceLabel(): Promise<string | null> {
-  try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return null;
-
-    const pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    const places = await Location.reverseGeocodeAsync({
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-    });
-    const p = places[0];
-    if (!p) return null;
-
-    const city = p.city ?? p.subregion ?? p.region ?? null;
-    const detail = p.district ?? p.street ?? p.name ?? null;
-    if (city && detail && detail !== city) return `${city} · ${detail}`;
-    if (city) return city;
-    if (detail) return detail;
-    return null;
-  } catch {
-    return null;
-  }
-}
+export const startPlaceLabelLookup = createPlaceLabelLookup(Location, {
+  accuracy: Location.Accuracy.Balanced,
+  language: () => getI18n().locale,
+  localized,
+});

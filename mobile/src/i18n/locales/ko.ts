@@ -6,6 +6,9 @@ export const ko: TranslationTree = {
     cancel: '취소',
     close: '닫기',
     retry: '다시 시도',
+    loadFailTitle: '불러오지 못했습니다',
+    saveFailTitle: '저장하지 못했습니다',
+    failBody: '다시 시도해 주세요.',
     appName: 'Sealcard',
   },
   binders: {
@@ -25,6 +28,8 @@ export const ko: TranslationTree = {
     sealStartA11y: '밀봉 시작',
     cardCount: '%{count}장',
     rowA11y: '%{name}, %{count}장',
+    loadFailTitle: '바인더를 불러오지 못했습니다',
+    loadFailBody: '지워진 것은 없습니다. 다시 시도해 보고, 계속 실패하면 앱을 다시 시작해 주세요.',
   },
   binderDetail: {
     fallbackTitle: '바인더',
@@ -53,6 +58,9 @@ export const ko: TranslationTree = {
     needPermissionTitle: '카메라 권한이 필요합니다',
     needPermissionBody: '사진을 찍으려면 카메라 권한이 필요합니다.',
     allow: '권한 허용',
+    openSettings: '설정 열기',
+    blockedBody:
+      'Sealcard의 카메라 권한이 꺼져 있습니다. 설정 › 권한에서 허용한 뒤 돌아오세요.',
     banner: '밀봉하면 수정할 수 없습니다',
     flip: '전환',
     flipA11y: '카메라 전환',
@@ -72,6 +80,8 @@ export const ko: TranslationTree = {
     locationUnavailable: '위치 없음',
     stampOff: '스탬프 꺼짐',
     binderPlaceholder: '바인더 제목',
+    captureFailTitle: '촬영하지 못했습니다',
+    captureFailBody: '다시 시도해 주세요.',
   },
   sealPreview: {
     title: '미리보기',
@@ -93,8 +103,16 @@ export const ko: TranslationTree = {
     finish: '꽂고 밀봉 완료',
     needSelect: '바인더를 선택하세요',
     defaultName: '나의 첫 바인더',
+    sealedToast: '밀봉됨 · %{name}',
     failTitle: '밀봉하지 못했습니다',
     failBody: '다시 시도해 주세요.',
+    stalledBody:
+      '저장이 평소보다 오래 걸리고 있습니다. 저장이 끝날 수도 있으니 다시 찍기 전에 바인더를 확인해 주세요. 「취소」로 나갈 수 있습니다.',
+    lateSealedToast: '늦게 끝난 밀봉을 저장했습니다 · %{name}',
+    lateFailedToast: '늦게 끝난 밀봉을 저장하지 못했습니다. 다시 찍어 주세요.',
+    loadFailTitle: '바인더 목록을 불러오지 못했습니다',
+    sealedUnsortedToast: '밀봉됨 · 바인더가 삭제되어 미분류에 넣었습니다',
+    lateSealedUnsortedToast: '늦게 끝난 밀봉을 미분류에 저장했습니다(바인더가 삭제됨)',
   },
   settings: {
     title: '설정',
@@ -132,6 +150,9 @@ export const ko: TranslationTree = {
     version: '버전 %{version}',
     privacy: '개인정보처리방침',
     contact: '문의',
+    linkFailTitle: '열 수 없습니다',
+    contactFallbackBody: '메일 앱을 찾을 수 없습니다. 문의: %{email}',
+    privacyFallbackBody: '브라우저에서 다음 주소를 열어 주세요: %{url}',
   },
   present: {
     share: '이미지 공유',

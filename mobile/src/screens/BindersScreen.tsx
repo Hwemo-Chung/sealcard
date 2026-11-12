@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -10,59 +10,46 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '../hooks/useFocusEffect';
+import { useReloadOnChange } from '../hooks/useReloadOnChange';
 
 import { PrimaryButton } from '../components/PrimaryButton';
-import type { Binder } from '../domain/types';
+import {
+  bindersView,
+  createRowsLoader,
+  loadBinderRows,
+  type RowsState,
+} from '../domain/binderRows';
 import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
-
-type Row = {
-  id: string | null;
-  name: string;
-  count: number;
-  thumb: string | null;
-};
 
 type Props = {
   onOpenBinder: (binderId: string | null) => void;
   onSeal: () => void;
   onSettings: () => void;
+  /** Bumped by App when cards changed behind this screen (late seal). */
+  refreshKey?: number;
 };
 
-export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
-  const { t, locale } = useI18n();
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
+export function BindersScreen({ onOpenBinder, onSeal, onSettings, refreshKey = 0 }: Props) {
+  const { t } = useI18n();
+  const [rowsState, setRowsState] = useState<RowsState>({ status: 'loading', rows: [] });
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [createBusy, setCreateBusy] = useState(false);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    const binders = await repo.listBinders();
-    const mapped: Row[] = await Promise.all(
-      binders.map(async (b: Binder) => ({
-        id: b.id,
-        name: b.name,
-        count: await repo.countCardsInBinder(b.id),
-        thumb: await repo.latestThumbInBinder(b.id),
-      })),
-    );
-    const uncatCount = await repo.countCardsInBinder(null);
-    if (uncatCount > 0) {
-      mapped.push({
-        id: null,
-        name: t('cardDetail.uncategorized'),
-        count: uncatCount,
-        thumb: await repo.latestThumbInBinder(null),
-      });
-    }
-    setRows(mapped);
-    setLoading(false);
-  }, [locale, t]);
+  const uncategorizedRef = useRef(t('cardDetail.uncategorized'));
+  uncategorizedRef.current = t('cardDetail.uncategorized');
+  // Never rejects: a failed read ends in the error view (retry), not an endless load.
+  const [loadRows] = useState(() =>
+    createRowsLoader(() => loadBinderRows(repo, uncategorizedRef.current), setRowsState),
+  );
+  const reload = useCallback(() => loadRows(), [loadRows]);
+  const rows = rowsState.rows;
+  const view = bindersView(rowsState);
 
   useFocusEffect(reload);
+  useReloadOnChange(refreshKey, reload);
 
   const createBinder = async () => {
     if (createBusy) return;
@@ -144,7 +131,23 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
 
       {createForm}
 
-      {rows.length === 0 && !loading ? (
+      {view === 'error' ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>{t('binders.loadFailTitle')}</Text>
+          <Text style={styles.emptyBody}>{t('binders.loadFailBody')}</Text>
+          <PrimaryButton
+            label={t('common.retry')}
+            onPress={() => void reload()}
+            style={{ marginTop: space.lg }}
+          />
+          <PrimaryButton
+            label={t('binders.seal')}
+            onPress={onSeal}
+            variant="ghost"
+            style={{ marginTop: space.sm }}
+          />
+        </View>
+      ) : view === 'empty' ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>{t('binders.emptyTitle')}</Text>
           <Text style={styles.emptyBody}>{t('binders.emptyBody')}</Text>
@@ -196,7 +199,7 @@ export function BindersScreen({ onOpenBinder, onSeal, onSettings }: Props) {
         />
       )}
 
-      {rows.length > 0 && (
+      {view === 'list' && (
         <View style={styles.fabBar}>
           <PrimaryButton
             label={t('binders.sealPlus')}

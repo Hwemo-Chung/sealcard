@@ -1,6 +1,9 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
+  AppState,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -11,12 +14,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { pressLock } from '../components/pressLock';
 import { TemplatePicker } from '../components/TemplatePicker';
 import { formatSealDate, nowIso } from '../domain/dates';
-import { resolvePlaceLabel } from '../domain/locationLabel';
+import { startPlaceLabelLookup } from '../domain/locationLabel';
+import {
+  classifyPermissionRequest,
+  openSettingsNow,
+  permissionAction,
+} from '../domain/permissions';
+import { createPlaceTracker, type PlaceLookup } from '../domain/placeLookup';
 import { cardLayout } from '../domain/templates';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
+import { onCameraAppState, placeForShot } from '../navigation/cameraWiring';
 import { colors, space } from '../theme';
 
 /** Fixed edge inset — no % wasted margin around live card preview. */
@@ -35,6 +46,12 @@ type Props = {
     sealedAtIso: string;
     showDate: boolean;
     locationLabel: string | null;
+    /**
+     * Lookup's first place when the post-shutter wait ran out with no place (not
+     * even the recent position). The caller applies it to the preview if it lands
+     * before the seal is confirmed (domain/placeLookup placeAtShutter, navigation/lateLocation).
+     */
+    locationPending: Promise<string | null> | null;
     showBinderName: boolean;
   }) => void;
   onCancel: () => void;
@@ -55,19 +72,34 @@ export function SealCameraScreen({
 }: Props) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [templateId, setTemplateId] = useState<TemplateId>(defaultTemplateId);
   const [busy, setBusy] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  /** A button press confirmed a permanent camera denial (not just canAskAgain=false). */
+  const [cameraBlocked, setCameraBlocked] = useState(false);
   /** Session overrides of settings defaults */
   const [showDate, setShowDate] = useState(showDateProp);
   const [showLocation, setShowLocation] = useState(showLocationProp);
   const [showBinderName, setShowBinderName] = useState(showBinderNameProp);
+  /**
+   * Location toggle as of now (updated on tap, before the re-render): the shutter
+   * re-reads it after its wait, so turning it off mid-wait stamps nothing.
+   */
+  const showLocationRef = useRef(showLocationProp);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [locationBusy, setLocationBusy] = useState(false);
+  /**
+   * Current place lookup (pending or settled) and its start time — awaited
+   * (bounded) at shutter time, with its recent-position label as the fallback when
+   * the wait runs out. Restarted on foreground and when stale at the shutter.
+   */
+  const [tracker] = useState(() => createPlaceTracker(startPlaceLabelLookup));
+  /** False after close/back — a capture finishing late must not navigate. */
+  const mountedRef = useRef(true);
   /** Stage layout — card fills this rect with EDGE padding only. */
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
   const sealedAtIso = nowIso();
@@ -109,23 +141,52 @@ export function SealCameraScreen({
     return () => clearTimeout(unlock);
   }, [facing, templateId]);
 
+  /**
+   * Show `lookup` in the stamp line: "finding place…" until it settles. A lookup
+   * that was replaced (restart, toggle off) or outlived the screen is ignored.
+   */
+  const follow = (lookup: PlaceLookup) => {
+    setLocationLabel(null);
+    setLocationBusy(true);
+    // `label` never rejects by contract; a broken lookup reads as "no place".
+    void lookup.label.catch(() => null).then((label) => {
+      if (!mountedRef.current || tracker.current() !== lookup) return;
+      setLocationLabel(label);
+      setLocationBusy(false);
+    });
+  };
+
   useEffect(() => {
     if (!showLocation) {
+      tracker.stop();
       setLocationLabel(null);
       setLocationBusy(false);
       return;
     }
-    let cancelled = false;
-    setLocationBusy(true);
-    void resolvePlaceLabel().then((label) => {
-      if (cancelled) return;
-      setLocationLabel(label);
-      setLocationBusy(false);
-    });
+    // The tracker keeps the (soon settled) lookup: take() reads it after awaiting
+    // the photo. A settled promise resolves immediately inside placeAtShutter.
+    follow(tracker.start());
+    // `follow` only uses stable setters, refs and the tracker.
+  }, [showLocation, tracker]);
+
+  useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
-  }, [showLocation]);
+  }, []);
+
+  // Back in the foreground (system settings, another app, screen unlock): re-read
+  // the camera permission and restart the place lookup, which may be an hour old.
+  // The restart never shows the location dialog (Android also reports 'active'
+  // when a permission dialog closes).
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) =>
+      onCameraAppState(state, { recheckPermission: getPermission, tracker, follow }),
+    );
+    return () => sub.remove();
+    // `follow` only uses stable setters, refs and the tracker.
+  }, [getPermission, tracker]);
 
   const templateLabel = t(`template.${templateId}_label`);
 
@@ -134,13 +195,33 @@ export function SealCameraScreen({
   }
 
   if (!permission.granted) {
+    const blocked = permissionAction(permission, cameraBlocked) === 'openSettings';
+    const onAllow = async () => {
+      if (blocked) {
+        void Linking.openSettings().catch(() => undefined);
+        return;
+      }
+      const before = permission;
+      const startedAt = Date.now();
+      const after = await requestPermission().catch(() => null);
+      if (!after || !mountedRef.current) return;
+      const outcome = classifyPermissionRequest(before, after);
+      // Blocked → the button becomes "open settings", so the next press is never a no-op.
+      setCameraBlocked(outcome === 'blocked' || outcome === 'blockedNoPrompt');
+      // System answered without a dialog: go to settings in this same press.
+      if (openSettingsNow(outcome, Date.now() - startedAt)) {
+        void Linking.openSettings().catch(() => undefined);
+      }
+    };
     return (
       <View style={[styles.center, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <Text style={styles.permTitle}>{t('sealCamera.needPermissionTitle')}</Text>
-        <Text style={styles.permBody}>{t('sealCamera.needPermissionBody')}</Text>
+        <Text style={styles.permBody}>
+          {blocked ? t('sealCamera.blockedBody') : t('sealCamera.needPermissionBody')}
+        </Text>
         <PrimaryButton
-          label={t('sealCamera.allow')}
-          onPress={() => void requestPermission()}
+          label={blocked ? t('sealCamera.openSettings') : t('sealCamera.allow')}
+          onPress={() => void onAllow()}
         />
         <PrimaryButton
           label={t('common.back')}
@@ -161,18 +242,41 @@ export function SealCameraScreen({
         skipProcessing: false,
       });
       if (!photo?.uri) return;
+      // Seal time = shutter time, even if we then wait briefly for the place lookup.
+      const sealedAt = nowIso();
+      // A lookup older than PLACE_MAX_AGE_MS is restarted; its shown place is dropped.
+      // The toggle is re-read after the wait (turned off meanwhile → no place).
+      const place = await placeForShot({
+        tracker,
+        shown: locationLabel,
+        isOn: () => showLocationRef.current,
+        follow,
+      });
+      if (!mountedRef.current) return;
       onCaptured({
         photoUri: photo.uri,
         templateId,
         dateFormatId,
-        sealedAtIso: nowIso(),
+        sealedAtIso: sealedAt,
         showDate,
-        locationLabel: showLocation ? locationLabel : null,
+        locationLabel: place.locationLabel,
+        locationPending: place.locationPending,
         showBinderName,
       });
+    } catch {
+      // takePictureAsync rejected (camera busy/unavailable): say so; the shutter unlocks below.
+      if (mountedRef.current) {
+        Alert.alert(t('sealCamera.captureFailTitle'), t('sealCamera.captureFailBody'));
+      }
     } finally {
       setBusy(false);
     }
+  };
+
+  const toggleLocation = () => {
+    const next = !showLocationRef.current;
+    showLocationRef.current = next;
+    setShowLocation(next);
   };
 
   const onPickTemplate = (id: TemplateId) => {
@@ -249,11 +353,12 @@ export function SealCameraScreen({
       >
         {/* Session stamp toggles (defaults from settings) */}
         <View style={styles.optRow}>
+          {/* Locked while a shot is in progress: the shot uses the toggles as of the shutter. */}
           <Pressable
-            onPress={() => setShowDate((v) => !v)}
-            style={[styles.optChip, showDate && styles.optChipOn]}
+            {...pressLock(busy, () => setShowDate((v) => !v))}
+            style={[styles.optChip, showDate && styles.optChipOn, busy && styles.optChipBusy]}
             accessibilityRole="switch"
-            accessibilityState={{ checked: showDate }}
+            accessibilityState={{ checked: showDate, disabled: busy }}
             accessibilityLabel={t('sealCamera.toggleDateA11y')}
           >
             <Text style={[styles.optChipText, showDate && styles.optChipTextOn]}>
@@ -261,10 +366,10 @@ export function SealCameraScreen({
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => setShowLocation((v) => !v)}
-            style={[styles.optChip, showLocation && styles.optChipOn]}
+            {...pressLock(busy, toggleLocation)}
+            style={[styles.optChip, showLocation && styles.optChipOn, busy && styles.optChipBusy]}
             accessibilityRole="switch"
-            accessibilityState={{ checked: showLocation }}
+            accessibilityState={{ checked: showLocation, disabled: busy }}
             accessibilityLabel={t('sealCamera.toggleLocationA11y')}
           >
             <Text
@@ -274,10 +379,10 @@ export function SealCameraScreen({
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => setShowBinderName((v) => !v)}
-            style={[styles.optChip, showBinderName && styles.optChipOn]}
+            {...pressLock(busy, () => setShowBinderName((v) => !v))}
+            style={[styles.optChip, showBinderName && styles.optChipOn, busy && styles.optChipBusy]}
             accessibilityRole="switch"
-            accessibilityState={{ checked: showBinderName }}
+            accessibilityState={{ checked: showBinderName, disabled: busy }}
             accessibilityLabel={t('sealCamera.toggleBinderA11y')}
           >
             <Text
@@ -406,6 +511,9 @@ const styles = StyleSheet.create({
   },
   optChipTextOn: {
     color: '#fff',
+  },
+  optChipBusy: {
+    opacity: 0.5,
   },
   handle: {
     alignSelf: 'center',

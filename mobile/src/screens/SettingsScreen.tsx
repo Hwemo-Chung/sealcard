@@ -1,9 +1,12 @@
 import Constants from 'expo-constants';
-import React, { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { PrimaryButton } from '../components/PrimaryButton';
 import { TemplatePicker } from '../components/TemplatePicker';
 import { PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../config';
+import { guard } from '../domain/guard';
+import { openOrFallback } from '../domain/openLink';
 import type {
   ActionNavPosition,
   DateFormatId,
@@ -13,7 +16,6 @@ import type {
 } from '../domain/types';
 import { isTemplateId } from '../domain/templates';
 import { useI18n } from '../i18n/I18nProvider';
-import { WidgetHomePreview } from '../presentation/WidgetHomePreview';
 import * as repo from '../storage/repository';
 import { colors, space } from '../theme';
 
@@ -31,18 +33,48 @@ const LANGS: { id: LocalePreference; labelKey: 'settings.languageSystem' | 'sett
 export function SettingsScreen({ onBack }: Props) {
   const { t, preference, setPreference } = useI18n();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // A failed read shows back + retry instead of an empty screen.
+  const load = useCallback(
+    () =>
+      guard(
+        async () => {
+          setLoadFailed(false);
+          setSettings(await repo.getSettings());
+        },
+        () => setLoadFailed(true),
+      ),
+    [],
+  );
 
   useEffect(() => {
-    void repo.getSettings().then(setSettings);
-  }, []);
+    void load();
+  }, [load]);
 
-  const patch = async (p: Partial<Settings>) => {
-    const next = await repo.updateSettings(p);
-    setSettings(next);
-  };
+  const saveFailed = () => Alert.alert(t('common.saveFailTitle'), t('common.failBody'));
+
+  /** Never rejects: a failed write keeps the shown value and says so. */
+  const patch = (p: Partial<Settings>) =>
+    guard(async () => {
+      const next = await repo.updateSettings(p);
+      setSettings(next);
+    }, saveFailed);
 
   if (!settings) {
-    return <View style={styles.root} />;
+    return (
+      <View style={[styles.root, styles.content]}>
+        {loadFailed && (
+          <>
+            <Pressable onPress={onBack} accessibilityRole="button">
+              <Text style={styles.link}>← {t('common.back')}</Text>
+            </Pressable>
+            <Text style={styles.title}>{t('common.loadFailTitle')}</Text>
+            <PrimaryButton label={t('common.retry')} onPress={() => void load()} />
+          </>
+        )}
+      </View>
+    );
   }
 
   const templateId: TemplateId = isTemplateId(settings.defaultTemplateId)
@@ -52,11 +84,21 @@ export function SettingsScreen({ onBack }: Props) {
   const version =
     Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
 
-  const widgetStatus = settings.widgetCardId
-    ? t('settings.widgetCard', { id: settings.widgetCardId.slice(0, 10) })
-    : settings.widgetBinderId
-      ? t('settings.widgetBinder', { id: settings.widgetBinderId.slice(0, 10) })
-      : t('settings.widgetUnset');
+  const openPrivacy = () =>
+    void openOrFallback((url) => Linking.openURL(url), PRIVACY_POLICY_URL, () =>
+      Alert.alert(
+        t('settings.linkFailTitle'),
+        t('settings.privacyFallbackBody', { url: PRIVACY_POLICY_URL }),
+      ),
+    );
+
+  const openContact = () =>
+    void openOrFallback((url) => Linking.openURL(url), `mailto:${SUPPORT_EMAIL}`, () =>
+      Alert.alert(
+        t('settings.linkFailTitle'),
+        t('settings.contactFallbackBody', { email: SUPPORT_EMAIL }),
+      ),
+    );
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
@@ -163,7 +205,7 @@ export function SettingsScreen({ onBack }: Props) {
       {LANGS.map((lang) => (
         <Pressable
           key={lang.id}
-          onPress={() => void setPreference(lang.id)}
+          onPress={() => void guard(() => setPreference(lang.id), saveFailed)}
           style={[styles.row, preference === lang.id && styles.rowActive]}
           accessibilityRole="button"
           accessibilityState={{ selected: preference === lang.id }}
@@ -172,28 +214,7 @@ export function SettingsScreen({ onBack }: Props) {
         </Pressable>
       ))}
 
-      <Text style={[styles.section, { marginTop: space.lg }]}>
-        {t('settings.widgetSection')}
-      </Text>
-      <Text style={styles.sectionHint}>{t('settings.widgetHint')}</Text>
-      <View style={styles.row}>
-        <Text style={styles.rowText}>{widgetStatus}</Text>
-      </View>
-      {(settings.widgetBinderId || settings.widgetCardId) && (
-        <Pressable
-          onPress={() =>
-            void patch({ widgetBinderId: null, widgetCardId: null })
-          }
-          style={[styles.row, { marginTop: space.sm }]}
-        >
-          <Text style={[styles.rowText, { color: colors.danger }]}>
-            {t('settings.widgetClear')}
-          </Text>
-        </Pressable>
-      )}
-      <WidgetHomePreview
-        key={`${settings.widgetBinderId ?? ''}-${settings.widgetCardId ?? ''}`}
-      />
+      {/* Home widget section removed: no pin entry point and no native widget yet (PRD U5). */}
 
       <Text style={[styles.section, { marginTop: space.lg }]}>
         {t('settings.about')}
@@ -203,18 +224,10 @@ export function SettingsScreen({ onBack }: Props) {
           {t('settings.version', { version })}
         </Text>
       </View>
-      <Pressable
-        onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
-        style={styles.row}
-        accessibilityRole="link"
-      >
+      <Pressable onPress={openPrivacy} style={styles.row} accessibilityRole="link">
         <Text style={styles.rowText}>{t('settings.privacy')}</Text>
       </Pressable>
-      <Pressable
-        onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
-        style={styles.row}
-        accessibilityRole="link"
-      >
+      <Pressable onPress={openContact} style={styles.row} accessibilityRole="link">
         <Text style={styles.rowText}>{t('settings.contact')}</Text>
       </Pressable>
     </ScrollView>

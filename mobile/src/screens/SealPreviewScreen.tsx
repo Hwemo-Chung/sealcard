@@ -10,6 +10,7 @@ import { captureRef } from 'react-native-view-shot';
 
 import { CardFace } from '../components/CardFace';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { pressLock } from '../components/pressLock';
 import type { DateFormatId, TemplateId } from '../domain/types';
 import { cardLayout } from '../domain/templates';
 import { useI18n } from '../i18n/I18nProvider';
@@ -28,6 +29,8 @@ type Props = {
   showBinderName?: boolean;
   onRetake: () => void;
   onConfirmSeal: (payload: {
+    /** This preview's photo: App ignores a composite from another shot (retake). */
+    photoUri: string;
     compositeUri: string;
     width: number;
     height: number;
@@ -95,6 +98,7 @@ export function SealPreviewScreen({
         result: 'tmpfile',
       });
       onConfirmSeal({
+        photoUri,
         compositeUri: uri,
         width: Math.round(cardW),
         height: Math.round(cardH),
@@ -130,7 +134,7 @@ export function SealPreviewScreen({
       <View style={styles.actions}>
         <PrimaryButton
           label={t('sealPreview.retake')}
-          onPress={onRetake}
+          {...pressLock(busy, onRetake)}
           variant="ghost"
           style={styles.btn}
         />

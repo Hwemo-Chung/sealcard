@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { CardActionNav } from '../components/CardActionNav';
+import { guard } from '../domain/guard';
 import type { ActionNavPosition, Binder, Card } from '../domain/types';
 import { useFocusEffect } from '../hooks/useFocusEffect';
 import { useI18n } from '../i18n/I18nProvider';
@@ -52,7 +53,7 @@ export function CardDetailScreen({
   const imgW = Math.min(pageW - space.md * 2, 340);
   const navTop = actionNavPosition === 'top';
 
-  const reload = useCallback(async () => {
+  const load = useCallback(async () => {
     const seed = await repo.getCard(initialCardId);
     if (!seed) {
       setCards([]);
@@ -80,6 +81,11 @@ export function CardDetailScreen({
       listRef.current?.scrollToIndex({ index: i, animated: false });
     });
   }, [initialCardId, binderIdProp, locale, t]);
+
+  const reload = useCallback(
+    () => guard(load, () => Alert.alert(t('common.loadFailTitle'), t('common.failBody'))),
+    [load, t],
+  );
 
   useFocusEffect(reload);
 
@@ -109,7 +115,7 @@ export function CardDetailScreen({
         text: t('cardDetail.destroy'),
         style: 'destructive',
         onPress: () =>
-          void (async () => {
+          void guard(async () => {
             await repo.destroyCard(card.id);
             if (cards.length <= 1) {
               onDestroyed();
@@ -122,16 +128,19 @@ export function CardDetailScreen({
             requestAnimationFrame(() => {
               listRef.current?.scrollToIndex({ index: ni, animated: false });
             });
-          })(),
+          }, () => Alert.alert(t('common.saveFailTitle'), t('common.failBody'))),
       },
     ]);
   };
 
   const moveTo = (binderId: string | null) => {
-    void (async () => {
-      await repo.moveCard(card.id, binderId);
-      await reload();
-    })();
+    void guard(
+      async () => {
+        await repo.moveCard(card.id, binderId);
+        await reload();
+      },
+      () => Alert.alert(t('common.saveFailTitle'), t('common.failBody')),
+    );
   };
 
   const moveOptions = [

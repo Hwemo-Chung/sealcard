@@ -6,6 +6,9 @@ export const ja: TranslationTree = {
     cancel: 'キャンセル',
     close: '閉じる',
     retry: '再試行',
+    loadFailTitle: '読み込めませんでした',
+    saveFailTitle: '保存できませんでした',
+    failBody: 'もう一度お試しください。',
     appName: 'Sealcard',
   },
   binders: {
@@ -25,6 +28,8 @@ export const ja: TranslationTree = {
     sealStartA11y: '封印を開始',
     cardCount: '%{count}枚',
     rowA11y: '%{name}、%{count}枚',
+    loadFailTitle: 'バインダーを読み込めませんでした',
+    loadFailBody: '削除されたものはありません。もう一度お試しください。続けて失敗する場合はアプリを再起動してください。',
   },
   binderDetail: {
     fallbackTitle: 'バインダー',
@@ -53,6 +58,9 @@ export const ja: TranslationTree = {
     needPermissionTitle: 'カメラの許可が必要です',
     needPermissionBody: '写真を撮るにはカメラへのアクセスが必要です。',
     allow: 'カメラを許可',
+    openSettings: '設定を開く',
+    blockedBody:
+      'Sealcard のカメラへのアクセスがオフです。設定 › 権限で許可してから戻ってください。',
     banner: '封印すると編集できません',
     flip: '切替',
     flipA11y: 'カメラを切替',
@@ -72,6 +80,8 @@ export const ja: TranslationTree = {
     locationUnavailable: '位置なし',
     stampOff: 'スタンプオフ',
     binderPlaceholder: 'バインダータイトル',
+    captureFailTitle: '撮影できませんでした',
+    captureFailBody: 'もう一度お試しください。',
   },
   sealPreview: {
     title: 'プレビュー',
@@ -93,8 +103,16 @@ export const ja: TranslationTree = {
     finish: '入れて封印を完了',
     needSelect: 'バインダーを選んでください',
     defaultName: 'はじめてのバインダー',
+    sealedToast: '封印しました · %{name}',
     failTitle: '封印できませんでした',
     failBody: 'もう一度お試しください。',
+    stalledBody:
+      '保存にいつもより時間がかかっています。保存が完了する場合もあるため、撮り直す前にバインダーをご確認ください。「キャンセル」で戻れます。',
+    lateSealedToast: '遅れていた封印を保存しました · %{name}',
+    lateFailedToast: '遅れていた封印を保存できませんでした。もう一度撮影してください。',
+    loadFailTitle: 'バインダーを読み込めませんでした',
+    sealedUnsortedToast: '封印しました · バインダーが削除されたため未分類に入れました',
+    lateSealedUnsortedToast: '遅れていた封印を未分類に保存しました（バインダーは削除済み）',
   },
   settings: {
     title: '設定',
@@ -132,6 +150,9 @@ export const ja: TranslationTree = {
     version: 'バージョン %{version}',
     privacy: 'プライバシーポリシー',
     contact: 'お問い合わせ',
+    linkFailTitle: '開けませんでした',
+    contactFallbackBody: 'メールアプリが見つかりません。%{email} までお問い合わせください。',
+    privacyFallbackBody: 'ブラウザで次のアドレスを開いてください: %{url}',
   },
   present: {
     share: '画像を共有',

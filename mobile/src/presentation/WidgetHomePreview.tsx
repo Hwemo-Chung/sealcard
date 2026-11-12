@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { guard } from '../domain/guard';
 import type { Card } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
@@ -18,7 +19,8 @@ export function WidgetHomePreview() {
   const [binderName, setBinderName] = useState<string | null>(null);
 
   useEffect(() => {
-    void (async () => {
+    // No UI entry point (PRD U5); a failed read just shows the empty preview.
+    void guard(async () => {
       const c = await repo.resolveWidgetCard();
       setCard(c);
       if (!c) return;
@@ -28,7 +30,7 @@ export function WidgetHomePreview() {
       } else {
         setBinderName(null);
       }
-    })();
+    });
   }, [locale]);
 
   if (!card) {

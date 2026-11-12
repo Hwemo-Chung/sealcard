@@ -3,11 +3,14 @@ import {
   ActivityIndicator,
   Animated,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
+import { FLYOUT_PADDING, moveFlyoutLayout } from '../domain/flyout';
 import { colors, space } from '../theme';
 import {
   IconBinder,
@@ -60,6 +63,9 @@ export function CardActionNav({
   const [active, setActive] = useState<CardActionNavItem | null>(null);
   const [flyout, setFlyout] = useState(false);
   const fade = useRef(new Animated.Value(0)).current;
+  const { height: windowHeight } = useWindowDimensions();
+  // Cap the menu so many binders never push the pill off-screen (PRD U6).
+  const flyoutLayout = moveFlyoutLayout(moveOptions.length, windowHeight);
 
   useEffect(() => {
     Animated.timing(fade, {
@@ -123,6 +129,13 @@ export function CardActionNav({
             },
           ]}
         >
+          <ScrollView
+            // flyout container adds FLYOUT_PADDING; rows get the rest of the cap
+            style={{ maxHeight: flyoutLayout.maxHeight - FLYOUT_PADDING }}
+            showsVerticalScrollIndicator={flyoutLayout.scrollable}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
           {moveOptions.map((opt) => (
             <Pressable
               key={opt.id ?? '__uncat'}
@@ -140,6 +153,7 @@ export function CardActionNav({
               </Text>
             </Pressable>
           ))}
+          </ScrollView>
         </Animated.View>
       )}
 

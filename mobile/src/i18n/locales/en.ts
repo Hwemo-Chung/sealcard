@@ -4,6 +4,9 @@ export const en = {
     cancel: 'Cancel',
     close: 'Close',
     retry: 'Try again',
+    loadFailTitle: 'Could not load',
+    saveFailTitle: 'Could not save',
+    failBody: 'Please try again.',
     appName: 'Sealcard',
   },
   binders: {
@@ -23,6 +26,8 @@ export const en = {
     sealStartA11y: 'Start sealing',
     cardCount: '%{count} cards',
     rowA11y: '%{name}, %{count} cards',
+    loadFailTitle: 'Could not load binders',
+    loadFailBody: 'Nothing was deleted. Try again; if it keeps failing, restart the app.',
   },
   binderDetail: {
     fallbackTitle: 'Binder',
@@ -51,6 +56,9 @@ export const en = {
     needPermissionTitle: 'Camera permission required',
     needPermissionBody: 'Camera access is required to take a photo.',
     allow: 'Allow camera',
+    openSettings: 'Open settings',
+    blockedBody:
+      'Camera access is turned off for Sealcard. Allow it in Settings › Permissions, then come back.',
     banner: 'Once sealed, it cannot be edited',
     flip: 'Flip',
     flipA11y: 'Switch camera',
@@ -70,6 +78,8 @@ export const en = {
     locationUnavailable: 'No location',
     stampOff: 'Stamps off',
     binderPlaceholder: 'Binder title',
+    captureFailTitle: 'Could not take the photo',
+    captureFailBody: 'Please try again.',
   },
   sealPreview: {
     title: 'Preview',
@@ -91,8 +101,16 @@ export const en = {
     finish: 'Place and finish sealing',
     needSelect: 'Choose a binder',
     defaultName: 'My first binder',
+    sealedToast: 'Sealed · %{name}',
     failTitle: 'Could not seal',
     failBody: 'Please try again.',
+    stalledBody:
+      'Saving is taking unusually long. It may still finish, so check your binder before shooting again. Cancel to leave.',
+    lateSealedToast: 'Late seal saved · %{name}',
+    lateFailedToast: 'The late seal could not be saved. Please take the photo again.',
+    loadFailTitle: 'Could not load binders',
+    sealedUnsortedToast: 'Sealed · its binder was deleted, so the card is in Uncategorized',
+    lateSealedUnsortedToast: 'Late seal saved to Uncategorized (its binder was deleted)',
   },
   settings: {
     title: 'Settings',
@@ -130,6 +148,9 @@ export const en = {
     version: 'Version %{version}',
     privacy: 'Privacy policy',
     contact: 'Contact',
+    linkFailTitle: 'Could not open',
+    contactFallbackBody: 'No email app found. Contact us at %{email}',
+    privacyFallbackBody: 'Open this address in a browser: %{url}',
   },
   present: {
     share: 'Share image',

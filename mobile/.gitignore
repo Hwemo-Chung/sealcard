@@ -44,3 +44,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local Expo module sources (modules/*/android/) must reach the EAS upload, but this
+# negation is not what does it: eas-cli applies each .gitignore on its own, so an
+# exception here cannot re-include what the repo-root .gitignore ignores (the vc10
+# AAB shipped without the module). The root rule is anchored to /mobile/android/.
+!/modules/*/android/

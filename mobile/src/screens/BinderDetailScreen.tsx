@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 
+import { guard } from '../domain/guard';
 import { useFocusEffect } from '../hooks/useFocusEffect';
+import { useReloadOnChange } from '../hooks/useReloadOnChange';
 import type { Card } from '../domain/types';
 import { useI18n } from '../i18n/I18nProvider';
 import * as repo from '../storage/repository';
@@ -20,25 +22,35 @@ type Props = {
   binderId: string | null;
   onBack: () => void;
   onOpenCard: (cardId: string) => void;
+  /** Bumped by App when cards changed behind this screen (late seal). */
+  refreshKey?: number;
 };
 
-export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
+export function BinderDetailScreen({ binderId, onBack, onOpenCard, refreshKey = 0 }: Props) {
   const { t, locale } = useI18n();
   const [title, setTitle] = useState('');
   const [cards, setCards] = useState<Card[]>([]);
   const colW = (Dimensions.get('window').width - space.md * 2 - space.sm) / 2;
 
-  const reload = useCallback(async () => {
-    if (binderId === null) {
-      setTitle(t('cardDetail.uncategorized'));
-    } else {
-      const b = await repo.getBinder(binderId);
-      setTitle(b?.name ?? t('binderDetail.fallbackTitle'));
-    }
-    setCards(await repo.listCards(binderId));
-  }, [binderId, locale, t]);
+  const reload = useCallback(
+    () =>
+      guard(
+        async () => {
+          if (binderId === null) {
+            setTitle(t('cardDetail.uncategorized'));
+          } else {
+            const b = await repo.getBinder(binderId);
+            setTitle(b?.name ?? t('binderDetail.fallbackTitle'));
+          }
+          setCards(await repo.listCards(binderId));
+        },
+        () => Alert.alert(t('common.loadFailTitle'), t('common.failBody')),
+      ),
+    [binderId, locale, t],
+  );
 
   useFocusEffect(reload);
+  useReloadOnChange(refreshKey, reload);
 
   const onDeleteBinder = () => {
     if (binderId === null) return;
@@ -48,10 +60,13 @@ export function BinderDetailScreen({ binderId, onBack, onOpenCard }: Props) {
         text: t('binderDetail.deleteAction'),
         style: 'destructive',
         onPress: () =>
-          void (async () => {
-            await repo.deleteBinder(binderId);
-            onBack();
-          })(),
+          void guard(
+            async () => {
+              await repo.deleteBinder(binderId);
+              onBack();
+            },
+            () => Alert.alert(t('common.saveFailTitle'), t('common.failBody')),
+          ),
       },
     ]);
   };
